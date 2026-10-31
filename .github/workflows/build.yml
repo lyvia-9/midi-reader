@@ -22,11 +22,35 @@ jobs:
         with:
           persist-credentials: false
       - name: Configure (downloads JUCE 7.0.12 and pianoroll-core db18fea)
-        run: cmake -S . -B build -A x64
+        shell: pwsh
+        run: |
+          cmake -S . -B build -A x64 2>&1 | Tee-Object -FilePath configure.log
+          if ($LASTEXITCODE -ne 0) { exit 1 }
       - name: Build
-        run: cmake --build build --config Release --parallel
+        shell: pwsh
+        run: |
+          cmake --build build --config Release --parallel 2>&1 | Tee-Object -FilePath build.log
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+      - name: Report build errors as annotations
+        if: failure()
+        shell: pwsh
+        run: |
+          # 完整日志要登录才能下载；把错误行写成注解，公开接口就能读到
+          foreach ($f in @("configure.log", "build.log")) {
+            if (Test-Path $f) {
+              Select-String -Path $f -Pattern "error C\d+|error LNK|fatal error|CMake Error|: error" |
+                Select-Object -First 40 |
+                ForEach-Object { $l = $_.Line.Trim(); if ($l.Length -gt 900) { $l = $l.Substring(0, 900) }; Write-Output "::error::$l" }
+            }
+          }
       - name: C++ core matches the Python prototype
-        run: build\Release\ParityTests.exe testdata\cases
+        shell: pwsh
+        run: |
+          build\Release\ParityTests.exe testdata\cases 2>&1 | Tee-Object -FilePath parity.log
+          if ($LASTEXITCODE -ne 0) {
+            Get-Content parity.log | Select-Object -First 40 | ForEach-Object { Write-Output "::error::$_" }
+            exit 1
+          }
       - name: Package
         shell: pwsh
         run: |
