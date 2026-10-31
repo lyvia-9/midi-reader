@@ -1,0 +1,99 @@
+{
+  "format": "midi-reader-sidecar",
+  "version": 1,
+  "source": {
+    "fileName": "input.mid",
+    "sha256": "30c23d7b12513255113af3c3e3e01e60ebbe92af9a06c124de9c25140da536a9",
+    "format": 1,
+    "ppq": 480,
+    "noteCount": 76
+  },
+  "streams": [
+    {
+      "id": "t1c0",
+      "chunk": 1,
+      "channel": 0,
+      "trackName": "Cello",
+      "program": 42,
+      "noteCount": 76
+    }
+  ],
+  "lanes": [
+    {
+      "id": "L1",
+      "name": "Cello",
+      "group": "弦乐",
+      "colour": "#d9604c",
+      "role": "unknown",
+      "instrument": "cello",
+      "instrumentSource": "name",
+      "range": {
+        "comfortLow": 36,
+        "comfortHigh": 76,
+        "limitLow": 36,
+        "limitHigh": 84
+      },
+      "sources": [
+        "t1c0"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "ks:t1c0:low",
+      "rule": "keySwitch",
+      "target": "t1c0",
+      "status": "auto",
+      "params": {
+        "side": "low",
+        "pitches": [
+          36,
+          38
+        ]
+      },
+      "evidence": {
+        "via": "gap",
+        "gap": 22,
+        "notes": 4,
+        "lead": 4,
+        "doubled": 0,
+        "inline": 0,
+        "extreme": false,
+        "outsideInstrument": true,
+        "instrument": "cello",
+        "instrumentSource": "name"
+      },
+      "reason": "在大提琴演奏极限之外；与正常音相隔 22 个半音；4/4 个后面紧跟正常音"
+    },
+    {
+      "id": "oct:t1c0",
+      "rule": "octaveShift",
+      "target": "t1c0",
+      "status": "auto",
+      "params": {
+        "shift": -12
+      },
+      "evidence": {
+        "instrument": "cello",
+        "instrumentSource": "name",
+        "notes": 72,
+        "outsideLimitByShift": {
+          "-24": 0,
+          "-12": 0,
+          "0": 20,
+          "12": 40,
+          "24": 68
+        },
+        "outsideComfortByShift": {
+          "-24": 0,
+          "-12": 12,
+          "0": 32,
+          "12": 60,
+          "24": 72
+        }
+      },
+      "reason": "按大提琴的音域，原位有 20/72 个音超出演奏极限，整体降 1 个八度后剩 0 个"
+    }
+  ],
+  "noteOverrides": {}
+}

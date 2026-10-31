@@ -1,0 +1,43 @@
+{
+  "format": "midi-reader-sidecar",
+  "version": 1,
+  "source": {
+    "fileName": "input.mid",
+    "sha256": "acdb08874ca0799df476aea8b839fa70617e49934466538e61a6ce8b556e0ab4",
+    "format": 1,
+    "ppq": 480,
+    "noteCount": 72
+  },
+  "streams": [
+    {
+      "id": "t1c0",
+      "chunk": 1,
+      "channel": 0,
+      "trackName": "Piano",
+      "program": 0,
+      "noteCount": 72
+    }
+  ],
+  "lanes": [
+    {
+      "id": "L1",
+      "name": "Piano",
+      "group": "键盘与竖琴",
+      "colour": "#8c6fd6",
+      "role": "unknown",
+      "instrument": "piano",
+      "instrumentSource": "name",
+      "range": {
+        "comfortLow": 21,
+        "comfortHigh": 108,
+        "limitLow": 21,
+        "limitHigh": 108
+      },
+      "sources": [
+        "t1c0"
+      ]
+    }
+  ],
+  "decisions": [],
+  "noteOverrides": {}
+}

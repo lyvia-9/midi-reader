@@ -1,0 +1,73 @@
+{
+  "format": "midi-reader-sidecar",
+  "version": 1,
+  "source": {
+    "fileName": "input.mid",
+    "sha256": "6f28654460c492683c1571bece3a985c14cbbb7793e60ba37e58c611fecb6b2a",
+    "format": 1,
+    "ppq": 480,
+    "noteCount": 30
+  },
+  "streams": [
+    {
+      "id": "t1c0",
+      "chunk": 1,
+      "channel": 0,
+      "trackName": "Horn 1",
+      "program": 60,
+      "noteCount": 30
+    }
+  ],
+  "lanes": [
+    {
+      "id": "L1",
+      "name": "Horn 1",
+      "group": "铜管",
+      "colour": "#e0a030",
+      "role": "unknown",
+      "instrument": "horn",
+      "instrumentSource": "name",
+      "range": {
+        "comfortLow": 41,
+        "comfortHigh": 72,
+        "limitLow": 34,
+        "limitHigh": 77
+      },
+      "sources": [
+        "t1c0"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "oct:t1c0",
+      "rule": "octaveShift",
+      "target": "t1c0",
+      "status": "review",
+      "params": {
+        "shift": -12
+      },
+      "evidence": {
+        "instrument": "horn",
+        "instrumentSource": "name",
+        "notes": 30,
+        "outsideLimitByShift": {
+          "-24": 2,
+          "-12": 0,
+          "0": 4,
+          "12": 15,
+          "24": 30
+        },
+        "outsideComfortByShift": {
+          "-24": 13,
+          "-12": 0,
+          "0": 4,
+          "12": 25,
+          "24": 30
+        }
+      },
+      "reason": "按圆号的音域，原位有 4/30 个音超出演奏极限，整体降 1 个八度后剩 0 个；没把握：出界的音不到两成"
+    }
+  ],
+  "noteOverrides": {}
+}

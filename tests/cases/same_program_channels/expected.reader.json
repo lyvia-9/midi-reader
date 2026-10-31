@@ -1,0 +1,81 @@
+{
+  "format": "midi-reader-sidecar",
+  "version": 1,
+  "source": {
+    "fileName": "input.mid",
+    "sha256": "29ac1092b4f9d28e79777103b27447faff8f3e90156b460c6e421292c6ceaa49",
+    "format": 1,
+    "ppq": 480,
+    "noteCount": 32
+  },
+  "streams": [
+    {
+      "id": "t1c0",
+      "chunk": 1,
+      "channel": 0,
+      "trackName": "Strings",
+      "program": 48,
+      "noteCount": 16
+    },
+    {
+      "id": "t1c1",
+      "chunk": 1,
+      "channel": 1,
+      "trackName": "Strings",
+      "program": 48,
+      "noteCount": 16
+    }
+  ],
+  "lanes": [
+    {
+      "id": "L1",
+      "name": "Strings",
+      "group": "",
+      "colour": "#808a99",
+      "role": "unknown",
+      "instrument": null,
+      "instrumentSource": null,
+      "range": {
+        "comfortLow": 0,
+        "comfortHigh": 127,
+        "limitLow": 0,
+        "limitHigh": 127
+      },
+      "sources": [
+        "t1c0",
+        "t1c1"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "split:t1",
+      "rule": "channelSplit",
+      "target": "t1",
+      "status": "review",
+      "params": {
+        "streams": [
+          "t1c0",
+          "t1c1"
+        ]
+      },
+      "evidence": {
+        "fileFormat": 1,
+        "channels": [
+          1,
+          2
+        ],
+        "programs": [
+          48,
+          48
+        ],
+        "noteCounts": [
+          16,
+          16
+        ]
+      },
+      "reason": "同一轨里有通道音色相同或未设音色，可能是同一乐器分通道，暂不拆"
+    }
+  ],
+  "noteOverrides": {}
+}

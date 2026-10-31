@@ -1,0 +1,78 @@
+{
+  "format": "midi-reader-sidecar",
+  "version": 1,
+  "source": {
+    "fileName": "input.mid",
+    "sha256": "ea92adb9e2355367ab973f68accb2cc2298b4eef25fabdb14839b3453bbee017",
+    "format": 1,
+    "ppq": 480,
+    "noteCount": 35
+  },
+  "streams": [
+    {
+      "id": "t1c0",
+      "chunk": 1,
+      "channel": 0,
+      "trackName": "Vln1 sustain",
+      "program": 40,
+      "noteCount": 7
+    },
+    {
+      "id": "t2c1",
+      "chunk": 2,
+      "channel": 1,
+      "trackName": "Vln1 staccato",
+      "program": 40,
+      "noteCount": 16
+    },
+    {
+      "id": "t3c2",
+      "chunk": 3,
+      "channel": 2,
+      "trackName": "Viola",
+      "program": 41,
+      "noteCount": 12
+    }
+  ],
+  "lanes": [
+    {
+      "id": "L1",
+      "name": "小提琴 I",
+      "group": "弦乐",
+      "colour": "#d9604c",
+      "role": "unknown",
+      "instrument": "violin",
+      "instrumentSource": "name",
+      "range": {
+        "comfortLow": 55,
+        "comfortHigh": 93,
+        "limitLow": 55,
+        "limitHigh": 103
+      },
+      "sources": [
+        "t1c0",
+        "t2c1"
+      ]
+    },
+    {
+      "id": "L3",
+      "name": "Viola",
+      "group": "弦乐",
+      "colour": "#d0432c",
+      "role": "unknown",
+      "instrument": "viola",
+      "instrumentSource": "name",
+      "range": {
+        "comfortLow": 48,
+        "comfortHigh": 84,
+        "limitLow": 48,
+        "limitHigh": 91
+      },
+      "sources": [
+        "t3c2"
+      ]
+    }
+  ],
+  "decisions": [],
+  "noteOverrides": {}
+}

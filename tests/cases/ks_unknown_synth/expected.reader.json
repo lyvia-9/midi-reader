@@ -1,0 +1,70 @@
+{
+  "format": "midi-reader-sidecar",
+  "version": 1,
+  "source": {
+    "fileName": "input.mid",
+    "sha256": "b8b8fd5125bf450de461ae054c9f9e00bef42d902434c3906c6441451546492f",
+    "format": 1,
+    "ppq": 480,
+    "noteCount": 54
+  },
+  "streams": [
+    {
+      "id": "t1c0",
+      "chunk": 1,
+      "channel": 0,
+      "trackName": "Lead Synth",
+      "program": null,
+      "noteCount": 54
+    }
+  ],
+  "lanes": [
+    {
+      "id": "L1",
+      "name": "Lead Synth",
+      "group": "",
+      "colour": "#808a99",
+      "role": "unknown",
+      "instrument": null,
+      "instrumentSource": null,
+      "range": {
+        "comfortLow": 0,
+        "comfortHigh": 127,
+        "limitLow": 0,
+        "limitHigh": 127
+      },
+      "sources": [
+        "t1c0"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "ks:t1c0:low",
+      "rule": "keySwitch",
+      "target": "t1c0",
+      "status": "review",
+      "params": {
+        "side": "low",
+        "pitches": [
+          36,
+          38
+        ]
+      },
+      "evidence": {
+        "via": "gap",
+        "gap": 10,
+        "notes": 6,
+        "lead": 6,
+        "doubled": 0,
+        "inline": 0,
+        "extreme": false,
+        "outsideInstrument": false,
+        "instrument": null,
+        "instrumentSource": null
+      },
+      "reason": "与正常音相隔 10 个半音；6/6 个后面紧跟正常音；没把握：位置不够极端"
+    }
+  ],
+  "noteOverrides": {}
+}

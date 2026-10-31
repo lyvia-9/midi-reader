@@ -1,0 +1,13 @@
+[project]
+name = "reader-proto"
+version = "0.1.0"
+description = "MIDI 阅读器 A 线：清洗规则原型（开发机用，不进安装包）"
+requires-python = ">=3.10"
+dependencies = ["symusic>=0.5"]
+
+[project.optional-dependencies]
+dev = ["pytest", "mido"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "tests"]

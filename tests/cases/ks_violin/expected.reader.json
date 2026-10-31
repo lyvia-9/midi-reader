@@ -1,0 +1,71 @@
+{
+  "format": "midi-reader-sidecar",
+  "version": 1,
+  "source": {
+    "fileName": "input.mid",
+    "sha256": "816984c1082122bdc0e339a7339b55bf9e71ce768859e95fc16de5598d11e489",
+    "format": 1,
+    "ppq": 480,
+    "noteCount": 54
+  },
+  "streams": [
+    {
+      "id": "t1c0",
+      "chunk": 1,
+      "channel": 0,
+      "trackName": "Violins 1",
+      "program": 40,
+      "noteCount": 54
+    }
+  ],
+  "lanes": [
+    {
+      "id": "L1",
+      "name": "Violins 1",
+      "group": "弦乐",
+      "colour": "#d9604c",
+      "role": "unknown",
+      "instrument": "violin",
+      "instrumentSource": "name",
+      "range": {
+        "comfortLow": 55,
+        "comfortHigh": 93,
+        "limitLow": 55,
+        "limitHigh": 103
+      },
+      "sources": [
+        "t1c0"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "ks:t1c0:low",
+      "rule": "keySwitch",
+      "target": "t1c0",
+      "status": "auto",
+      "params": {
+        "side": "low",
+        "pitches": [
+          12,
+          14,
+          16
+        ]
+      },
+      "evidence": {
+        "via": "gap",
+        "gap": 48,
+        "notes": 6,
+        "lead": 6,
+        "doubled": 0,
+        "inline": 0,
+        "extreme": true,
+        "outsideInstrument": true,
+        "instrument": "violin",
+        "instrumentSource": "name"
+      },
+      "reason": "音高在极端音区；在小提琴演奏极限之外；与正常音相隔 48 个半音；6/6 个后面紧跟正常音"
+    }
+  ],
+  "noteOverrides": {}
+}

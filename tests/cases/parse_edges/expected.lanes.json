@@ -1,0 +1,36 @@
+{
+  "format": "midi-reader-lanes",
+  "version": 1,
+  "unitsPerQuarter": 480,
+  "documentLength": 1440,
+  "meterChanges": [
+    {
+      "tick": 0,
+      "numerator": 3,
+      "denominator": 4
+    }
+  ],
+  "warnings": [],
+  "lanes": [
+    {
+      "id": "L1",
+      "info": {"name": "小提琴", "group": "弦乐", "colour": "#d9604c", "role": "unknown", "sourceTrackCount": 1, "comfortLow": 55, "comfortHigh": 93, "limitLow": 55, "limitHigh": 103},
+      "longestNote": 480,
+      "notes": [
+        [0, 240, 60, 80, 0, 0],
+        [0, 240, 64, 80, 1, 0],
+        [480, 240, 62, 96, 2, 0],
+        [720, 240, 62, 97, 3, 0],
+        [960, 480, 67, 100, 4, 0]
+      ]
+    },
+    {
+      "id": "L2",
+      "info": {"name": "Bass", "group": "", "colour": "#808a99", "role": "unknown", "sourceTrackCount": 1, "comfortLow": 0, "comfortHigh": 127, "limitLow": 0, "limitHigh": 127},
+      "longestNote": 380,
+      "notes": [
+        [100, 380, 36, 112, 5, 0]
+      ]
+    }
+  ]
+}

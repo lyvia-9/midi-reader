@@ -1,0 +1,3 @@
+{
+  "description": "解析边界：running status、vel 0 当 note-off、同音重触发、孤立 note-off、未结束音、GBK 轨名、未知块"
+}

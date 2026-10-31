@@ -1,0 +1,128 @@
+{
+  "format": "midi-reader-sidecar",
+  "version": 1,
+  "source": {
+    "fileName": "input.mid",
+    "sha256": "3939d0d4b663af5e5a7a3bbd1bb4e5d5eac357f9b42a3a578596382d17421eab",
+    "format": 0,
+    "ppq": 480,
+    "noteCount": 64
+  },
+  "streams": [
+    {
+      "id": "t0c0",
+      "chunk": 0,
+      "channel": 0,
+      "trackName": "Untitled",
+      "program": 73,
+      "noteCount": 16
+    },
+    {
+      "id": "t0c1",
+      "chunk": 0,
+      "channel": 1,
+      "trackName": "Untitled",
+      "program": 42,
+      "noteCount": 16
+    },
+    {
+      "id": "t0c9",
+      "chunk": 0,
+      "channel": 9,
+      "trackName": "Untitled",
+      "program": null,
+      "noteCount": 32
+    }
+  ],
+  "lanes": [
+    {
+      "id": "L1",
+      "name": "Untitled · 长笛",
+      "group": "木管",
+      "colour": "#4caf7a",
+      "role": "unknown",
+      "instrument": "flute",
+      "instrumentSource": "program",
+      "range": {
+        "comfortLow": 62,
+        "comfortHigh": 93,
+        "limitLow": 59,
+        "limitHigh": 96
+      },
+      "sources": [
+        "t0c0"
+      ]
+    },
+    {
+      "id": "L2",
+      "name": "Untitled · 鼓",
+      "group": "打击乐",
+      "colour": "#9e8a78",
+      "role": "unknown",
+      "instrument": "drums",
+      "instrumentSource": "drumChannel",
+      "range": {
+        "comfortLow": 0,
+        "comfortHigh": 127,
+        "limitLow": 0,
+        "limitHigh": 127
+      },
+      "sources": [
+        "t0c9"
+      ]
+    },
+    {
+      "id": "L3",
+      "name": "Untitled · 大提琴",
+      "group": "弦乐",
+      "colour": "#d9604c",
+      "role": "unknown",
+      "instrument": "cello",
+      "instrumentSource": "program",
+      "range": {
+        "comfortLow": 36,
+        "comfortHigh": 76,
+        "limitLow": 36,
+        "limitHigh": 84
+      },
+      "sources": [
+        "t0c1"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "split:t0",
+      "rule": "channelSplit",
+      "target": "t0",
+      "status": "auto",
+      "params": {
+        "streams": [
+          "t0c0",
+          "t0c1",
+          "t0c9"
+        ]
+      },
+      "evidence": {
+        "fileFormat": 0,
+        "channels": [
+          1,
+          2,
+          10
+        ],
+        "programs": [
+          73,
+          42,
+          null
+        ],
+        "noteCounts": [
+          16,
+          16,
+          32
+        ]
+      },
+      "reason": "type 0 文件，所有乐器挤在一条轨里，按通道拆开"
+    }
+  ],
+  "noteOverrides": {}
+}

@@ -1,0 +1,69 @@
+{
+  "format": "midi-reader-sidecar",
+  "version": 1,
+  "source": {
+    "fileName": "input.mid",
+    "sha256": "6618b821c57f8e04f0835a13c648e4ef9eb9125fc339ab5581fd764832d2373f",
+    "format": 1,
+    "ppq": 480,
+    "noteCount": 6
+  },
+  "streams": [
+    {
+      "id": "t1c0",
+      "chunk": 1,
+      "channel": 0,
+      "trackName": "小提琴",
+      "program": null,
+      "noteCount": 5
+    },
+    {
+      "id": "t2c1",
+      "chunk": 2,
+      "channel": 1,
+      "trackName": "Bass",
+      "program": null,
+      "noteCount": 1
+    }
+  ],
+  "lanes": [
+    {
+      "id": "L1",
+      "name": "小提琴",
+      "group": "弦乐",
+      "colour": "#d9604c",
+      "role": "unknown",
+      "instrument": "violin",
+      "instrumentSource": "name",
+      "range": {
+        "comfortLow": 55,
+        "comfortHigh": 93,
+        "limitLow": 55,
+        "limitHigh": 103
+      },
+      "sources": [
+        "t1c0"
+      ]
+    },
+    {
+      "id": "L2",
+      "name": "Bass",
+      "group": "",
+      "colour": "#808a99",
+      "role": "unknown",
+      "instrument": null,
+      "instrumentSource": null,
+      "range": {
+        "comfortLow": 0,
+        "comfortHigh": 127,
+        "limitLow": 0,
+        "limitHigh": 127
+      },
+      "sources": [
+        "t2c1"
+      ]
+    }
+  ],
+  "decisions": [],
+  "noteOverrides": {}
+}

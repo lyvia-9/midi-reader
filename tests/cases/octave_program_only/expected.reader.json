@@ -1,0 +1,73 @@
+{
+  "format": "midi-reader-sidecar",
+  "version": 1,
+  "source": {
+    "fileName": "input.mid",
+    "sha256": "850dc5a68943756cd8eff2ebc7fdc308f89581163a33320ba2292bd32a2b2a4d",
+    "format": 1,
+    "ppq": 480,
+    "noteCount": 30
+  },
+  "streams": [
+    {
+      "id": "t1c0",
+      "chunk": 1,
+      "channel": 0,
+      "trackName": "",
+      "program": 72,
+      "noteCount": 30
+    }
+  ],
+  "lanes": [
+    {
+      "id": "L1",
+      "name": "短笛",
+      "group": "木管",
+      "colour": "#4caf7a",
+      "role": "unknown",
+      "instrument": "piccolo",
+      "instrumentSource": "program",
+      "range": {
+        "comfortLow": 76,
+        "comfortHigh": 103,
+        "limitLow": 74,
+        "limitHigh": 108
+      },
+      "sources": [
+        "t1c0"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "oct:t1c0",
+      "rule": "octaveShift",
+      "target": "t1c0",
+      "status": "review",
+      "params": {
+        "shift": 12
+      },
+      "evidence": {
+        "instrument": "piccolo",
+        "instrumentSource": "program",
+        "notes": 30,
+        "outsideLimitByShift": {
+          "-24": 30,
+          "-12": 28,
+          "0": 14,
+          "12": 0,
+          "24": 2
+        },
+        "outsideComfortByShift": {
+          "-24": 30,
+          "-12": 30,
+          "0": 16,
+          "12": 2,
+          "24": 8
+        }
+      },
+      "reason": "按短笛的音域，原位有 14/30 个音超出演奏极限，整体升 1 个八度后剩 0 个；没把握：乐器只从音色号猜出"
+    }
+  ],
+  "noteOverrides": {}
+}

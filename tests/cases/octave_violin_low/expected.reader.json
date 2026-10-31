@@ -1,0 +1,73 @@
+{
+  "format": "midi-reader-sidecar",
+  "version": 1,
+  "source": {
+    "fileName": "input.mid",
+    "sha256": "f4db25f460f0b7ca15a9c8ff957b1ca53b5fa67d7b50e4b2053fa2a1af296541",
+    "format": 1,
+    "ppq": 480,
+    "noteCount": 38
+  },
+  "streams": [
+    {
+      "id": "t1c0",
+      "chunk": 1,
+      "channel": 0,
+      "trackName": "Violin 2",
+      "program": null,
+      "noteCount": 38
+    }
+  ],
+  "lanes": [
+    {
+      "id": "L1",
+      "name": "Violin 2",
+      "group": "弦乐",
+      "colour": "#d9604c",
+      "role": "unknown",
+      "instrument": "violin",
+      "instrumentSource": "name",
+      "range": {
+        "comfortLow": 55,
+        "comfortHigh": 93,
+        "limitLow": 55,
+        "limitHigh": 103
+      },
+      "sources": [
+        "t1c0"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "oct:t1c0",
+      "rule": "octaveShift",
+      "target": "t1c0",
+      "status": "auto",
+      "params": {
+        "shift": 12
+      },
+      "evidence": {
+        "instrument": "violin",
+        "instrumentSource": "name",
+        "notes": 38,
+        "outsideLimitByShift": {
+          "-24": 38,
+          "-12": 28,
+          "0": 14,
+          "12": 0,
+          "24": 0
+        },
+        "outsideComfortByShift": {
+          "-24": 38,
+          "-12": 28,
+          "0": 14,
+          "12": 0,
+          "24": 6
+        }
+      },
+      "reason": "按小提琴的音域，原位有 14/38 个音超出演奏极限，整体升 1 个八度后剩 0 个"
+    }
+  ],
+  "noteOverrides": {}
+}

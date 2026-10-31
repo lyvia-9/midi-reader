@@ -1,0 +1,3 @@
+{
+  "description": "小提琴轨，乐句前用 C0/D0/E0（MIDI 12/14/16）切演奏法 → keyswitch 自动识别；检查 MIDI 里另出一条 KS 轨"
+}
