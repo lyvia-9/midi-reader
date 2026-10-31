@@ -79,10 +79,18 @@ public:
 
 private:
     void openFromCommandLine(const juce::String& commandLine) {
-        // 把 MIDI 拖到 exe 上、或“打开方式”关联时，路径在命令行里
-        auto args = juce::StringArray::fromTokens(commandLine, true);
-        for (auto a : args) {
-            a = a.unquoted();
+        // 把 MIDI 拖到 exe 上、或“打开方式”关联时，路径在命令行里。路径常带空格和中文：
+        // 先把整行当一个路径试，再试按平台规则切开的每个参数。
+        juce::StringArray candidates;
+        candidates.add(commandLine.trim().unquoted());
+        candidates.addArray(getCommandLineParameterArray());
+        candidates.addArray(juce::StringArray::fromTokens(commandLine, true));
+        const juce::File debugLog(juce::SystemStats::getEnvironmentVariable("MIDI_READER_DEBUG", {}));
+        const bool debug = debugLog.getFullPathName().isNotEmpty();
+        if (debug) debugLog.appendText("cmdline: [" + commandLine + "]\n");
+        for (auto a : candidates) {
+            a = a.trim().unquoted();
+            if (debug) debugLog.appendText("arg: [" + a + "] exists=" + juce::String((int)juce::File(a).existsAsFile()) + "\n");
             if (a.isEmpty()) continue;
             const juce::File f = juce::File::isAbsolutePath(a) ? juce::File(a) : juce::File::getCurrentWorkingDirectory().getChildFile(a);
             if (f.existsAsFile()) {
