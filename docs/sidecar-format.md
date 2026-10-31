@@ -30,7 +30,7 @@ sidecar 里的一切都靠两种 id 回指原文件：**stream id** 和 **source
 
 全曲长度 `documentLength` = 所有块最后一个事件 tick 的最大值。
 
-参考实现：`reader_proto/smf.py`。测试样例 `tests/cases/parse_edges` 覆盖了上面每一条。
+参考实现：`proto/reader_proto/smf.py`（C++：`src/core/Smf.cpp`）。测试样例 `testdata/cases/parse_edges` 覆盖了上面每一条。
 
 ## 2. 文件结构
 
@@ -140,7 +140,7 @@ sidecar 里的一切都靠两种 id 回指原文件：**stream id** 和 **source
 
 每条 lane 的音符按 (start, pitch, sourceNote) 升序。`LaneInfo.sourceTrackCount` = 这条 lane 的 stream 来自几个不同的块。
 
-参考实现：`reader_proto/project.py`。
+参考实现：`proto/reader_proto/project.py`（C++：`src/core/Project.cpp`）。
 
 ## 4. 投影结果文件（测试用）
 

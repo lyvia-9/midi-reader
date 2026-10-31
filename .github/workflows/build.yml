@@ -1,0 +1,63 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    name: Windows app
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Configure (downloads JUCE 7.0.12 and pianoroll-core db18fea)
+        run: cmake -S . -B build -A x64
+      - name: Build
+        run: cmake --build build --config Release --parallel
+      - name: C++ core matches the Python prototype
+        run: build\Release\ParityTests.exe testdata\cases
+      - name: Package
+        shell: pwsh
+        run: |
+          $out = "dist/MIDI-Reader"
+          New-Item -ItemType Directory -Force $out | Out-Null
+          Copy-Item "build/MidiReader_artefacts/Release/MIDI Reader.exe" "$out/"
+          Copy-Item "docs/使用说明.md" "$out/"
+          Copy-Item "LICENSE" "$out/"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: MIDI-Reader-windows
+          path: dist/MIDI-Reader
+          retention-days: 30
+
+  core-tests:
+    name: Core parity and Python prototype tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Python prototype tests
+        run: |
+          pip install symusic mido pytest
+          cd proto && python -m pytest -q
+      - name: C++ core (no JUCE)
+        run: |
+          cmake -S . -B build-core -DMIDI_READER_BUILD_APP=OFF -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-core --parallel
+          ./build-core/ParityTests testdata/cases

@@ -1,5 +1,7 @@
 # MIDI 阅读器 · A 线：Python 清洗原型
 
+> 现在是规则的参考实现：改规则先在这里改，再搬到 `../src/core/`，见上一级 README。以下命令都在 `proto/` 目录里运行。
+
 《多轨只读画布 接口设计》“开工顺序与验收”里的 A 线：吃进一个 MIDI，输出 sidecar 和一个“一个逻辑声部一条轨”的检查用 MIDI，用来验证三条基础清洗规则。
 **只在开发机上用，不进安装包。** 这里定稿的 sidecar 格式和测试样例，是合体时 C++ 要对齐的东西。
 
@@ -67,11 +69,11 @@ Windows 上把 `.venv/bin/` 换成 `.venv\Scripts\`。
 .venv/bin/python -m pytest -q
 ```
 
-`tests/cases/<名字>/` 每个目录是一个“输入 MIDI → 期望结果”样例：`input.mid`、可选的 `input.reader.json`（你已有的 sidecar），以及 `expected.reader.json` / `expected.lanes.json`。现有 11 个是合成样例（`tests/make_cases.py` 生成），每个只考一件事，`case.json` 里写着考什么。
+`../testdata/cases/<名字>/` 每个目录是一个“输入 MIDI → 期望结果”样例：`input.mid`、可选的 `input.reader.json`（你已有的 sidecar），以及 `expected.reader.json` / `expected.lanes.json`。现有 11 个是合成样例（`tests/make_cases.py` 生成），每个只考一件事，`case.json` 里写着考什么。
 
 **加真实工程的样例**：
 
-1. 建 `tests/cases/<名字>/`，把 FL 导出的 MIDI 放进去，命名为 `input.mid`
+1. 建 `../testdata/cases/<名字>/`，把 FL 导出的 MIDI 放进去，命名为 `input.mid`
 2. 跑 `run`，在 FL 里核对 `*.lanes.mid`；有不对的，用 `decide` / `note` / `merge` / `instrument` 改到对，或者把规则改好
 3. 改出来的 sidecar 如果要作为样例的一部分，复制成 `input.reader.json`
 4. `.venv/bin/python tests/golden.py --update <名字>`，把当前结果钉成期望

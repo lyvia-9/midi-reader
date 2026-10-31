@@ -1,6 +1,5 @@
 #include "core/Instruments.h"
 
-#include <initializer_list>
 #include <map>
 #include <memory>
 #include <regex>
@@ -12,8 +11,8 @@ struct GroupDef { const char* key; const char* name; int order; const char* colo
 struct InstrumentDef {
     const char* id; const char* nameZh; const char* group; int order;
     int comfortLow, comfortHigh, limitLow, limitHigh;
-    std::initializer_list<const char*> keywords;
-    std::initializer_list<int> programs;
+    std::vector<const char*> keywords;   // vector 而不是 initializer_list：静态表里后者的底层数组寿命在各编译器上不好说
+    std::vector<int> programs;
     bool hasRange;
 };
 #include "core/InstrumentTable.inc"

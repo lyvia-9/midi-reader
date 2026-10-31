@@ -68,11 +68,7 @@ else()
     FetchContent_Declare(pianorollcore
         GIT_REPOSITORY https://github.com/rmkstudio/pianoroll-core.git
         GIT_TAG db18fea6b159b912848dec87cc0d88821ce892d4)
-    FetchContent_GetProperties(pianorollcore)
-    if(NOT pianorollcore_POPULATED)
-        FetchContent_Populate(pianorollcore)
-        add_subdirectory("${pianorollcore_SOURCE_DIR}" "${pianorollcore_BINARY_DIR}" EXCLUDE_FROM_ALL)
-    endif()
+    FetchContent_MakeAvailable(pianorollcore)
 endif()
 
 juce_add_gui_app(MidiReader

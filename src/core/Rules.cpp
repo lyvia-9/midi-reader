@@ -1,6 +1,7 @@
 #include "core/Rules.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <set>
 #include <tuple>
 
