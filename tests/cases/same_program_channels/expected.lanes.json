@@ -14,7 +14,7 @@
   "lanes": [
     {
       "id": "L1",
-      "info": {"name": "Strings", "group": "", "colour": "#808a99", "role": "unknown", "sourceTrackCount": 1, "comfortLow": 0, "comfortHigh": 127, "limitLow": 0, "limitHigh": 127},
+      "info": {"name": "Strings", "group": "弦乐", "colour": "#d9604c", "role": "unknown", "sourceTrackCount": 1, "comfortLow": 36, "comfortHigh": 93, "limitLow": 28, "limitHigh": 103},
       "longestNote": 460,
       "notes": [
         [0, 460, 60, 90, 1, 4],

@@ -49,12 +49,15 @@ review 的理由：同一个乐器故意分通道（比如采样器按通道放�
 | `doubled` | 和正常音构成八度叠加的个数：同音名，起音差 ≤ 1/8 拍，收音差 ≤ max(1/8 拍, 较长音长的 1/4) |
 | `inline` | “接在旋律线上”的个数：起音时恰好有前一个音结束、收音时恰好有下一个音起（都是 ±1/8 拍），而起音时没有正常音一起起——正好填满旋律里的一个空位 |
 
+**先排除**（不在极端音区时）：候选不到 3 个音；或者乐器已知、候选都在它能演奏的音域里、空档又不到 12 个半音。
+这两条来自第一个真实工程（liubian-full-v3）里的 4 个误报：钢琴左手 2 个 A1、钢片琴 3 个旋律音、小提琴 1 个高音、Pad 2 个低音。
+
 **判定**（n = 候选音符数；“乐器可信” = 来源是 user / name / drumChannel）
 
 - **auto**：位置够硬（`extreme`，或 `outsideInstrument` 且乐器可信）
   且空档 ≥ 7（`outsideInstrument` 且乐器可信时不要求）
   且 lead ≥ 60%、doubled ≤ 20%、inline ≤ 20%
-- **review**：（空档 ≥ 7 或 `outsideInstrument` 或 `extreme`）且 doubled ≤ 50%、inline ≤ 50%
+- **review**：（空档 ≥ 7 或 `outsideInstrument` 或 `extreme`）且 lead ≥ 50%、doubled ≤ 50%、inline ≤ 50%
 - 其余不报
 
 **各证据防的是什么**

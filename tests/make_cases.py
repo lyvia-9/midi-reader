@@ -163,6 +163,25 @@ def case_octave_few_outliers():
     save("octave_few_outliers", m, "圆号声部只有 4/30 个音写过了上限 → 不足以说明音源错了八度：降八度只报待确认，不自动应用")
 
 
+def case_false_alarms():
+    """仿真实工程 liubian-full-v3 里的四个误报：都不是 keyswitch，什么都不该报。"""
+    m = new()
+    m.tracks.append(conductor())
+    lh = melody([45, 52, 57, 52] * 6, 0, Q)
+    lh[0] = (0, Q - 20, 33)                       # 两个 A1，比其余低 12 个半音……
+    lh[12] = (12 * Q, Q - 20, 33)
+    m.tracks.append(track("Piano LH", notes(0, lh)))
+    cel = melody([81, 84, 86, 88, 86, 84] * 4, 0, Q // 2)
+    cel += melody([69, 71, 72], 13 * Q, Q // 2)   # 钢片琴一句低一点的旋律，空档 9
+    m.tracks.append(track("Celesta", notes(1, cel)))
+    vln = melody([55, 57, 59, 60, 62, 64] * 3, 0, Q) + [(18 * Q, Q, 71)]  # 第二小提琴一个高音
+    m.tracks.append(track("Violins II", notes(2, vln)))
+    pad = [(0, 4 * BAR, 52), (0, 4 * BAR, 57), (0, 4 * BAR, 60), (4 * BAR, 4 * BAR, 45), (4 * BAR, 4 * BAR, 57),
+           (8 * BAR, 4 * BAR, 45), (8 * BAR, 4 * BAR, 60), (8 * BAR, 4 * BAR, 64)]
+    m.tracks.append(track("Pad", notes(3, pad, vel=60)))
+    save("false_alarms", m, "仿真实工程里的误报：钢琴左手两个 A1、钢片琴三个低一点的旋律音、第二小提琴一个高音、Pad 两个低音——都不是 keyswitch，不该报")
+
+
 def case_ks_and_octave_cello():
     m = new()
     m.tracks.append(conductor())
@@ -245,7 +264,7 @@ def write_merge_sidecar():
 
 
 ALL = [case_type0_channels, case_same_program_channels, case_ks_violin, case_ks_unknown_synth,
-       case_piano_octaves, case_octave_violin_low, case_octave_few_outliers, case_octave_program_only, case_ks_and_octave_cello,
+       case_piano_octaves, case_octave_violin_low, case_octave_few_outliers, case_false_alarms, case_octave_program_only, case_ks_and_octave_cello,
        case_manual_merge, case_parse_edges]
 
 if __name__ == "__main__":

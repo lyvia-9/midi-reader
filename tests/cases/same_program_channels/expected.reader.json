@@ -30,16 +30,16 @@
     {
       "id": "L1",
       "name": "Strings",
-      "group": "",
-      "colour": "#808a99",
+      "group": "弦乐",
+      "colour": "#d9604c",
       "role": "unknown",
-      "instrument": null,
-      "instrumentSource": null,
+      "instrument": "string_section",
+      "instrumentSource": "name",
       "range": {
-        "comfortLow": 0,
-        "comfortHigh": 127,
-        "limitLow": 0,
-        "limitHigh": 127
+        "comfortLow": 36,
+        "comfortHigh": 93,
+        "limitLow": 28,
+        "limitHigh": 103
       },
       "sources": [
         "t1c0",

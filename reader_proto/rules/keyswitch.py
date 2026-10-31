@@ -34,6 +34,9 @@ TOL_DIVISOR = 8               # 容差 = ppq / 8
 AUTO_LEAD = (3, 5)            # lead ≥ 60%
 AUTO_DOUBLED = (1, 5)         # doubled ≤ 20%
 REVIEW_DOUBLED = (1, 2)       # doubled ≤ 50%
+REVIEW_LEAD = (1, 2)          # review 也要 lead ≥ 50%：keyswitch 总得为后面的音服务
+MIN_NOTES_NOT_EXTREME = 3     # 不在极端音区的候选至少 3 个音才报（极端音区里一个就够：开头切一次很常见）
+GAP_INSIDE_INSTRUMENT = 12    # 乐器已知、候选又在它能演奏的音域里：空档至少一个八度才报
 AUTO_INLINE = (1, 5)          # inline ≤ 20%
 REVIEW_INLINE = (1, 2)        # inline ≤ 50%
 
@@ -174,10 +177,19 @@ def _analyze_side(stream: Stream, notes: list[RawNote], ppq: int, inst: Instrume
     inline_ok = _ratio_at_most(inline, n, AUTO_INLINE)
     gap_ok = gap >= GAP_STRONG or (outside_inst and trusted)
 
+    # 真实工程里的误报（liubian-full-v3）：钢琴左手 2 个 A1、钢片琴 3 个低一点的旋律音、
+    # 小提琴 1 个高音、Pad 2 个低音，全被报成待确认。这些音都在乐器音域内、音数很少。
+    if not extreme:
+        if n < MIN_NOTES_NOT_EXTREME:
+            return None
+        if has_range and not outside_inst and gap < GAP_INSIDE_INSTRUMENT:
+            return None
+
     if position and gap_ok and lead_ok and doubled_ok and inline_ok:
         status = STATUS_AUTO
     elif ((gap >= GAP_STRONG or outside_inst or extreme)
-          and _ratio_at_most(doubled, n, REVIEW_DOUBLED) and _ratio_at_most(inline, n, REVIEW_INLINE)):
+          and _ratio_at_most(doubled, n, REVIEW_DOUBLED) and _ratio_at_most(inline, n, REVIEW_INLINE)
+          and _ratio_at_least(lead, n, REVIEW_LEAD)):
         status = STATUS_REVIEW
     else:
         return None

@@ -15,6 +15,7 @@ GROUPS: dict[str, tuple[str, int]] = {
     "percussion": ("打击乐", 30),
     "keyboards": ("键盘与竖琴", 40),
     "guitars": ("吉他与贝斯", 45),
+    "chinese": ("民族乐器", 47),
     "voices": ("人声", 50),
     "strings": ("弦乐", 60),
     "other": ("其他", 90),
@@ -26,6 +27,7 @@ GROUP_COLOURS: dict[str, str] = {
     "percussion": "#9e8a78",
     "keyboards": "#8c6fd6",
     "guitars": "#d16b9a",
+    "chinese": "#c9a227",
     "voices": "#4fb3c8",
     "strings": "#d9604c",
     "other": "#808a99",
@@ -72,14 +74,24 @@ INSTRUMENTS: list[Instrument] = [
     _I("timpani", "定音鼓", "percussion", 1, (40, 57), (38, 60), (r"timpani", r"\btimp\b", r"pauken", r"定音鼓"), (47,)),
     _I("glockenspiel", "钟琴", "percussion", 3, (79, 108), (79, 108), (r"glockenspiel", r"\bglock\b", r"钟琴"), (9,)),
     _I("xylophone", "木琴", "percussion", 4, (65, 108), (65, 108), (r"xylophone", r"\bxylo\b", r"木琴"), (13,)),
+    _I("marimba", "马林巴", "percussion", 5, (45, 96), (36, 96), (r"marimba", r"马林巴"), (12,)),
+    _I("vibraphone", "颤音琴", "percussion", 6, (53, 89), (53, 89), (r"vibraphone", r"\bvibes?\b", r"颤音琴"), (11,)),
+    _I("taiko", "太鼓", "percussion", 8, (0, 127), (0, 127), (r"taiko", r"太鼓"), (116,), False),
     _I("drums", "鼓", "percussion", 9, (0, 127), (0, 127), (r"\bdrums?\b", r"\bkit\b", r"percussion", r"\bperc\b", r"架子鼓", r"打击乐"), (), False),
     # 键盘与竖琴
     _I("harp", "竖琴", "keyboards", 1, (24, 103), (23, 104), (r"\bharps?\b", r"\barpa\b", r"harfe", r"竖琴"), (46,)),
     _I("celesta", "钢片琴", "keyboards", 2, (60, 108), (60, 108), (r"celest[ae]", r"钢片琴"), (8,)),
+    _I("music_box", "八音盒", "keyboards", 4, (60, 96), (53, 103), (r"music ?box", r"八音盒"), (10,)),
     _I("piano", "钢琴", "keyboards", 3, (21, 108), (21, 108), (r"piano", r"klavier", r"\bpno\b", r"钢琴"), ()),
     # 吉他与贝斯
     _I("guitar", "吉他", "guitars", 1, (40, 84), (40, 88), (r"guitar", r"\bgtr\b", r"吉他"), tuple(range(24, 32))),
     _I("bass_guitar", "贝斯", "guitars", 2, (28, 60), (28, 67), (r"bass guitar", r"e-?bass", r"electric bass", r"\bbass gtr\b", r"贝斯"), (32, 33, 34, 35, 36, 37)),
+    # 民族乐器（音域按常见规格粗取）
+    _I("guzheng", "古筝", "chinese", 1, (38, 86), (38, 86), (r"guzheng", r"\bzheng\b", r"古筝"), (107,)),
+    _I("pipa", "琵琶", "chinese", 2, (45, 86), (45, 89), (r"\bpipa\b", r"琵琶"), (105,)),
+    _I("yangqin", "扬琴", "chinese", 3, (43, 88), (43, 91), (r"yangqin", r"扬琴"), ()),
+    _I("dizi", "笛子", "chinese", 4, (64, 96), (60, 98), (r"\bdizi\b", r"笛子"), ()),
+    _I("erhu", "二胡", "chinese", 5, (62, 93), (62, 98), (r"\berhu\b", r"二胡"), (110,)),
     # 人声
     _I("soprano", "女高音", "voices", 1, (60, 81), (59, 88), (r"^soprano$", r"\bsopranos?\b(?! sax)", r"女高音"), ()),
     _I("alto", "女中音", "voices", 2, (55, 74), (53, 77), (r"^altos?$", r"\bcontralto\b", r"女中音"), ()),
@@ -89,6 +101,7 @@ INSTRUMENTS: list[Instrument] = [
     _I("violin", "小提琴", "strings", 1, (55, 93), (55, 103), (r"violins?", r"violini", r"violon\b", r"geigen?", r"\bvln?s?\b", r"\bvln?\.?\s?(\d|i+)\b", r"\bvn\.?\s?(\d|i+)\b", r"\bvn\b", r"小提琴"), (40, 110)),
     _I("viola", "中提琴", "strings", 2, (48, 84), (48, 91), (r"violas?\b", r"viole\b", r"bratsche", r"\bvla\b", r"\bva\b", r"中提琴"), (41,)),
     _I("cello", "大提琴", "strings", 3, (36, 76), (36, 84), (r"cellos?", r"celli", r"violoncell", r"\bvc\b", r"\bvcl?\b", r"大提琴"), (42,)),
+    _I("string_section", "弦乐组", "strings", 5, (36, 93), (28, 103), (r"\bstrings?\b", r"string ensemble", r"弦乐"), (44, 45, 48, 49)),
     _I("contrabass", "低音提琴", "strings", 4, (28, 60), (24, 67), (r"contra\s?bass(?!oon)", r"double bass", r"kontrabass", r"\bbasses\b", r"\bbassi\b", r"\bcb\b", r"\bdb\b", r"低音提琴"), (43,)),
 ]
 

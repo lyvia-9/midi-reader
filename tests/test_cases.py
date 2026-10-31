@@ -102,6 +102,11 @@ def test_octave_few_outliers_not_auto():
     assert sorted(n.pitch for n in proj.lanes[0].notes if n.flags & NoteFlag.REVIEW) == [78, 79, 79, 80]
 
 
+def test_false_alarms_from_real_project():
+    _, sc, _ = load("false_alarms")
+    assert sc.decisions == []
+
+
 def test_ks_and_octave_feed_each_other():
     smf, sc, proj = load("ks_and_octave_cello")
     assert statuses(sc) == {"ks:t1c0:low": "auto", "oct:t1c0": "auto"}

@@ -1,0 +1,121 @@
+{
+  "format": "midi-reader-sidecar",
+  "version": 1,
+  "source": {
+    "fileName": "input.mid",
+    "sha256": "ebe5adb83b2145e0f70a09b1fc68a2f2626c2ee2b386ac62b4e505c9bfc89cca",
+    "format": 1,
+    "ppq": 480,
+    "noteCount": 78
+  },
+  "streams": [
+    {
+      "id": "t1c0",
+      "chunk": 1,
+      "channel": 0,
+      "trackName": "Piano LH",
+      "program": null,
+      "noteCount": 24
+    },
+    {
+      "id": "t2c1",
+      "chunk": 2,
+      "channel": 1,
+      "trackName": "Celesta",
+      "program": null,
+      "noteCount": 27
+    },
+    {
+      "id": "t3c2",
+      "chunk": 3,
+      "channel": 2,
+      "trackName": "Violins II",
+      "program": null,
+      "noteCount": 19
+    },
+    {
+      "id": "t4c3",
+      "chunk": 4,
+      "channel": 3,
+      "trackName": "Pad",
+      "program": null,
+      "noteCount": 8
+    }
+  ],
+  "lanes": [
+    {
+      "id": "L1",
+      "name": "Celesta",
+      "group": "键盘与竖琴",
+      "colour": "#8c6fd6",
+      "role": "unknown",
+      "instrument": "celesta",
+      "instrumentSource": "name",
+      "range": {
+        "comfortLow": 60,
+        "comfortHigh": 108,
+        "limitLow": 60,
+        "limitHigh": 108
+      },
+      "sources": [
+        "t2c1"
+      ]
+    },
+    {
+      "id": "L2",
+      "name": "Piano LH",
+      "group": "键盘与竖琴",
+      "colour": "#a58fdf",
+      "role": "unknown",
+      "instrument": "piano",
+      "instrumentSource": "name",
+      "range": {
+        "comfortLow": 21,
+        "comfortHigh": 108,
+        "limitLow": 21,
+        "limitHigh": 108
+      },
+      "sources": [
+        "t1c0"
+      ]
+    },
+    {
+      "id": "L3",
+      "name": "Violins II",
+      "group": "弦乐",
+      "colour": "#d9604c",
+      "role": "unknown",
+      "instrument": "violin",
+      "instrumentSource": "name",
+      "range": {
+        "comfortLow": 55,
+        "comfortHigh": 93,
+        "limitLow": 55,
+        "limitHigh": 103
+      },
+      "sources": [
+        "t3c2"
+      ]
+    },
+    {
+      "id": "L4",
+      "name": "Pad",
+      "group": "",
+      "colour": "#808a99",
+      "role": "unknown",
+      "instrument": null,
+      "instrumentSource": null,
+      "range": {
+        "comfortLow": 0,
+        "comfortHigh": 127,
+        "limitLow": 0,
+        "limitHigh": 127
+      },
+      "sources": [
+        "t4c3"
+      ]
+    }
+  ],
+  "decisions": [],
+  "noteOverrides": {}
+}
