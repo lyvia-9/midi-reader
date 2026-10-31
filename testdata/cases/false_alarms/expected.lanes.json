@@ -48,7 +48,7 @@
     },
     {
       "id": "L2",
-      "info": {"name": "Piano LH", "group": "键盘与竖琴", "colour": "#a58fdf", "role": "unknown", "sourceTrackCount": 1, "comfortLow": 21, "comfortHigh": 108, "limitLow": 21, "limitHigh": 108},
+      "info": {"name": "Piano LH", "group": "键盘与竖琴", "colour": "#9980da", "role": "unknown", "sourceTrackCount": 1, "comfortLow": 21, "comfortHigh": 108, "limitLow": 21, "limitHigh": 108},
       "longestNote": 460,
       "notes": [
         [0, 460, 33, 90, 0, 0],

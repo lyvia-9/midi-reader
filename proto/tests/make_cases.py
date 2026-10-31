@@ -14,7 +14,7 @@ from pathlib import Path
 import mido
 
 ROOT = Path(__file__).resolve().parent
-CASES = ROOT / "cases"
+CASES = ROOT.parent.parent / "testdata" / "cases"
 sys.path.insert(0, str(ROOT.parent))
 
 PPQ = 480

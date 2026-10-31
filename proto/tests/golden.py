@@ -25,7 +25,7 @@ from reader_proto import project as P  # noqa: E402
 from reader_proto import sidecar as S  # noqa: E402
 from reader_proto.smf import read_smf  # noqa: E402
 
-CASES = ROOT / "cases"
+CASES = ROOT.parent.parent / "testdata" / "cases"
 
 
 def case_dirs(names: list[str] | None = None) -> list[Path]:

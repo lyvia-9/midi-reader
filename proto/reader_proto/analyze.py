@@ -5,7 +5,6 @@
 """
 from __future__ import annotations
 
-import colorsys
 from pathlib import Path
 
 from . import instruments as I
@@ -17,13 +16,23 @@ MAX_ROUNDS = 3   # keyswitch ⇄ 八度 互相喂，转到不变为止
 
 
 def _shade(hex_colour: str, i: int) -> str:
-    """同组第 i 条：在组色基础上交替调亮/调暗。"""
-    r, g, b = (int(hex_colour[k:k + 2], 16) / 255 for k in (1, 3, 5))
-    h, l, s = colorsys.rgb_to_hls(r, g, b)
-    step = (i + 1) // 2 * 0.08 * (1 if i % 2 else -1)
-    l = min(0.85, max(0.25, l + step))
-    r, g, b = colorsys.hls_to_rgb(h, l, s)
-    return "#{:02x}{:02x}{:02x}".format(round(r * 255), round(g * 255), round(b * 255))
+    """同组第 i 条：在组色基础上交替调亮/调暗（整数运算，C++ 逐位一致）。
+
+    i=0 原色；奇数调亮（向白色混 12%·k），偶数调暗（向黑色混 12%·k），k = (i+1)//2，最多 3 档循环。
+    """
+    if i == 0:
+        return hex_colour
+    k = ((i + 1) // 2 - 1) % 3 + 1
+    amount = 12 * k
+    out = []
+    for pos in (1, 3, 5):
+        c = int(hex_colour[pos:pos + 2], 16)
+        if i % 2:
+            c = c + (255 - c) * amount // 100
+        else:
+            c = c * (100 - amount) // 100
+        out.append(c)
+    return "#{:02x}{:02x}{:02x}".format(*out)
 
 
 def _lane_for(streams: list[Stream], split: bool) -> LaneSpec:
@@ -47,6 +56,7 @@ def _lane_for(streams: list[Stream], split: bool) -> LaneSpec:
 def _set_instrument(spec: LaneSpec, inst: I.Instrument | None, src: str | None) -> None:
     spec.instrument = inst.id if inst else None
     spec.instrumentSource = src
+    spec.comfortLow, spec.comfortHigh, spec.limitLow, spec.limitHigh = 0, 127, 0, 127
     if inst is not None:
         spec.group = I.group_name(inst.group)
         spec.colour = I.GROUP_COLOURS[inst.group]
@@ -203,7 +213,6 @@ def set_lane_instrument(smf: SmfFile, sc: Sidecar, lane_id: str, inst_id: str | 
         if lane.id == lane_id:
             inst = I.BY_ID[inst_id] if inst_id else None
             _set_instrument(lane, inst, "user" if inst else None)
-            lane.colour = _shade(lane.colour, 0)
             # 乐器变了，依赖它的自动结论作废重算
             sc.decisions = [x for x in sc.decisions if not (x.target in lane.sources and x.status not in USER_STATUSES)]
             return analyze(smf, sc)
