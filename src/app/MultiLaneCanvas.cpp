@@ -311,7 +311,7 @@ void MultiLaneCanvas::paint(juce::Graphics& g) {
     if (model.laneCount() == 0) {
         g.setColour(muted);
         g.setFont(font(15));
-        g.drawFittedText(juce::String::fromUTF8("把 MIDI 文件拖到这里，或点左上角“打开”"), getLocalBounds(),
+        g.drawFittedText(juce::String::fromUTF8("把 MIDI 文件拖到这里，或点左上角“打开”\n音频文件（wav / mp3 / flac…）也可以：会先按编制预设扒成 MIDI"), getLocalBounds(),
                          juce::Justification::centred, 2);
         return;
     }
@@ -443,6 +443,7 @@ void MultiLaneCanvas::paintNotes(juce::Graphics& g, const Row& r, int lane, cons
                                  juce::Rectangle<float> clip, bool overview) {
     const auto& notes = model.laneNotes(lane);
     const auto colour = model.laneInfo(lane).colour;
+    const bool silent = mixOf(lane) & mixSilent;
     // 只取可见音符：按 start 二分，起点往前推“最长音长”，不漏掉横跨进来的长音
     const double from = view.timeStart - model.longestNote(lane);
     const double to = view.timeStart + view.timeSpan;
@@ -460,6 +461,7 @@ void MultiLaneCanvas::paintNotes(juce::Graphics& g, const Row& r, int lane, cons
         if (!rect.intersects(clip)) continue;
         auto c = noteColour(n, colour);
         if (overview) c = c.withAlpha(.85f);
+        if (silent) c = c.withMultipliedAlpha(silentAlpha);
         g.setColour(c);
         g.fillRect(rect);
     }
@@ -493,7 +495,8 @@ void MultiLaneCanvas::paintDensityBand(juce::Graphics& g, const Row& r, int lane
         if (hi[(size_t)c] < lo[(size_t)c]) continue;
         const float yTop = (float)vp.pitchToY(hi[(size_t)c]);
         const float yBot = (float)(vp.pitchToY(lo[(size_t)c]) + std::max(1.0, vp.rowHeight));
-        g.setColour(worst[(size_t)c] == 2 ? hard : worst[(size_t)c] == 1 ? warn : colour);
+        const auto cc = worst[(size_t)c] == 2 ? hard : worst[(size_t)c] == 1 ? warn : colour;
+        g.setColour((mixOf(lane) & mixSilent) ? cc.withMultipliedAlpha(silentAlpha) : cc);
         g.fillRect((float)(x0 + c), yTop, 1.f, std::max(1.f, yBot - yTop));
     }
 }
@@ -524,11 +527,29 @@ void MultiLaneCanvas::paintHeader(juce::Graphics& g, const Row& r, juce::Rectang
     }
     const auto info = model.laneInfo(r.laneIndex);
     const auto& s = stats[(size_t)r.laneIndex];
+    const auto f = mixOf(r.laneIndex);
     g.setColour(info.colour);
     g.fillRect(h.withWidth(4).reduced(0, 2));
-    auto t = h.reduced(8, 1).withTrimmedLeft(2);
+    // M / S 按钮在最右
+    const auto mb = mixButton(h, false), sb = mixButton(h, true);
+    auto button = [&](juce::Rectangle<float> rb, const char* text, bool on, juce::Colour onColour) {
+        if (on) {
+            g.setColour(onColour);
+            g.fillRoundedRectangle(rb, 3);
+            g.setColour(background);
+        } else {
+            g.setColour(line);
+            g.drawRoundedRectangle(rb.reduced(.5f), 3, 1);
+            g.setColour(muted);
+        }
+        g.setFont(font(std::max(9.f, rb.getHeight() * .62f), true));
+        g.drawText(text, rb, juce::Justification::centred);
+    };
+    button(mb, "M", f & mixMuted, muteOn);
+    button(sb, "S", f & mixSoloed, soloOn);
+    auto t = h.reduced(8, 1).withTrimmedLeft(2).withRight(mb.getX() - 2);
     // 右侧小标记：待确认 / 超极限
-    auto marks = t.removeFromRight(30);
+    auto marks = t.removeFromRight(20);
     float mx = marks.getRight();
     auto dot = [&](juce::Colour c) {
         mx -= 9;
@@ -537,7 +558,7 @@ void MultiLaneCanvas::paintHeader(juce::Graphics& g, const Row& r, juce::Rectang
     };
     if (s.hard) dot(hard);
     if (s.review) dot(warn);
-    g.setColour(ink);
+    g.setColour((f & mixSilent) ? muted : ink);
     g.setFont(font(layout.laneHeight >= 26 ? 13.f : 11.f));
     juce::String name = info.name;
     if (info.sourceTrackCount > 1) name << "  x" << info.sourceTrackCount;
@@ -574,7 +595,7 @@ void MultiLaneCanvas::paintHover(juce::Graphics& g) {
     juce::Rectangle<float> box(hoverPos.x + 14, hoverPos.y + 14, w + pad * 2, lines.size() * lh + pad * 2);
     if (box.getRight() > getWidth() - 14) box.setX(hoverPos.x - box.getWidth() - 10);
     if (box.getBottom() > getHeight() - 14) box.setY(hoverPos.y - box.getHeight() - 10);
-    g.setColour(juce::Colour(0xf0151718));
+    g.setColour(tooltipBg);
     g.fillRoundedRectangle(box, 4);
     g.setColour(line);
     g.drawRoundedRectangle(box, 4, 1);
@@ -594,6 +615,38 @@ int MultiLaneCanvas::rowAt(juce::Point<float> p) const {
     for (size_t i = 0; i < rows.size(); ++i)
         if (cy >= rows[i].y && cy < rows[i].y + rows[i].height) return (int)i;
     return -1;
+}
+
+juce::Rectangle<float> MultiLaneCanvas::mixButton(juce::Rectangle<float> header, bool solo) const {
+    const float size = juce::jlimit(12.f, 18.f, header.getHeight() - 8.f);
+    const float right = header.getX() + layout.headerWidth - 6;
+    const float x = solo ? right - size : right - 2 * size - 3;
+    return {x, header.getCentreY() - size / 2, size, size};
+}
+
+int MultiLaneCanvas::mixButtonAt(juce::Point<float> p, int& lane) const {
+    if (p.x >= layout.headerWidth) return 0;
+    const int ri = rowAt(p);
+    if (ri < 0 || rows[(size_t)ri].kind != Row::lane) return 0;
+    const auto h = rowBounds(rows[(size_t)ri]).withWidth(layout.headerWidth);
+    lane = rows[(size_t)ri].laneIndex;
+    if (mixButton(h, false).expanded(1).contains(p)) return 1;
+    if (mixButton(h, true).expanded(1).contains(p)) return 2;
+    return 0;
+}
+
+juce::String MultiLaneCanvas::getTooltip() {
+    int lane = -1;
+    switch (mixButtonAt(getMouseXYRelative().toFloat(), lane)) {
+        case 1: return juce::String::fromUTF8("静音（M 键）");
+        case 2: return juce::String::fromUTF8("独奏（S 键）。可以同时独奏几条；Ctrl+点击：只听这一条");
+        default: return {};
+    }
+}
+
+void MultiLaneCanvas::setLaneMix(std::vector<std::uint8_t> laneFlags) {
+    mix = std::move(laneFlags);
+    repaint();
 }
 
 const LaneNote* MultiLaneCanvas::noteAt(int lane, juce::Point<float> p) const {
@@ -665,6 +718,12 @@ void MultiLaneCanvas::mouseDown(const juce::MouseEvent& e) {
         setGroupCollapsed(r.group, r.kind == Row::groupHeader);
         return;
     }
+    int mixLane = -1;
+    if (const int which = mixButtonAt(p, mixLane)) {
+        if (which == 1 && onMuteClicked) onMuteClicked(mixLane);
+        if (which == 2 && onSoloClicked) onSoloClicked(mixLane, e.mods.isCommandDown());
+        return;
+    }
     // 左键：先当成单击，拖动超过几像素再变成平移
     drag = pianoroll::beginMiddleDrag(pianoroll::PointerRegion::notes, {p.x, p.y}, view,
                                       {area.getX(), area.getY(), area.getWidth(), area.getHeight()});
@@ -706,6 +765,8 @@ void MultiLaneCanvas::mouseUp(const juce::MouseEvent& e) {
 void MultiLaneCanvas::mouseDoubleClick(const juce::MouseEvent& e) {
     const int ri = rowAt(e.position);
     if (ri < 0 || e.position.y < layout.rulerHeight) return;
+    int mixLane = -1;
+    if (mixButtonAt(e.position, mixLane)) return;   // 连点 M/S 不打开细看
     const auto& r = rows[(size_t)ri];
     if (r.kind == Row::lane && onLaneExpandRequested) onLaneExpandRequested(r.laneIndex);
 }

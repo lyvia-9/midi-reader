@@ -1,1 +1,3 @@
 *.bat text eol=crlf
+# 比对用的期望输出要逐字节一致：Windows 上 core.autocrlf 会把它们改成 CRLF
+testdata/** -text

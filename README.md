@@ -5,6 +5,7 @@
 - 用户说明：[`docs/使用说明.md`](docs/使用说明.md)
 - sidecar 格式与投影算法：[`docs/sidecar-format.md`](docs/sidecar-format.md)
 - 三条清洗规则：[`docs/rules.md`](docs/rules.md)
+- 音频管线（音频 → 分离 → 扒谱 → 按编制预设整理，以及 remix）：[`docs/audio-pipeline.md`](docs/audio-pipeline.md)
 
 GPL-3.0（链接 [pianoroll-core](https://github.com/rmkstudio/pianoroll-core)）。
 
@@ -15,6 +16,8 @@ GPL-3.0（链接 [pianoroll-core](https://github.com/rmkstudio/pianoroll-core)�
 | `src/core/` | 纯 C++17，无 JUCE：SMF 读取、乐器库、sidecar、三条规则、映射、投影、tempo map |
 | `src/app/` | JUCE 7 独立应用：多轨只读画布 `MultiLaneCanvas`、左栏、播放、只读细看窗口 |
 | `proto/` | Python 原型（A 线）：规则的参考实现，改规则先在这里改 |
+| `proto/reader_proto/pipeline/` | 音频管线原型（B 线）：provider 接口、缓存、配方、给阅读器用的 stdio 协议 |
+| `presets/` | 编制预设：声部、乐器、分轨、扒谱条件 |
 | `testdata/cases/` | “输入 MIDI → 期望结果”样例，Python 和 C++ 两边都跑 |
 | `tests/ParityTests.cpp` | C++ 核心与 Python 原型逐字节对照 |
 | `tools/gen_instruments.py` | 从 Python 乐器库生成 C++ 乐器表 |

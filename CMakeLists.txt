@@ -83,7 +83,10 @@ target_sources(MidiReader PRIVATE
     src/app/MultiLaneCanvas.cpp
     src/app/SidePanel.cpp
     src/app/Transport.cpp
-    src/app/LaneDetailView.cpp)
+    src/app/LaneDetailView.cpp
+    src/app/AudioPipeline.cpp
+    src/app/AudioJobDialog.cpp
+    src/app/JobPanel.cpp)
 
 target_compile_definitions(MidiReader PRIVATE
     JUCE_WEB_BROWSER=0

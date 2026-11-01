@@ -145,11 +145,34 @@ private:
     Transport& transport;
 };
 
+// 细看窗用 pianoroll-core 的 PianoRollView，它有自己的一套调色板：从 Theme.h 拼一份给它，换皮肤时跟着变
+static ViewPalette detailPalette() {
+    using namespace theme;
+    ViewPalette p;
+    p.background = background;
+    p.panel = panel;
+    p.line = line;
+    p.ink = ink;
+    p.muted = muted;
+    p.accent = accent;
+    p.velocity = velocityBar;
+    p.scaleRow = pianoScaleRow;
+    p.blackRow = pianoBlackRow;
+    p.whiteRow = pianoWhiteRow;
+    p.beatLine = pianoBeatLine;
+    p.subdivisionLine = pianoSubdivisionLine;
+    p.blackKey = pianoBlackKey;
+    p.whiteKey = pianoWhiteKey;
+    p.font = [](float size) { return font(size); };
+    return p;
+}
+
 LaneDetailWindow::LaneDetailWindow(Document& d, Transport& t, const juce::String& laneId, bool showKs)
     : juce::DocumentWindow("", theme::panel, juce::DocumentWindow::allButtons), doc(d), transport(t), id(laneId) {
     host = std::make_unique<Host>(doc, transport);
     host->showKs = showKs;
     view = std::make_unique<PianoRollView>(*host);
+    view->setPalette(detailPalette());
     host->view = view.get();
     view->setLaneLayout(true, false, .82f, .18f);
     view->setFollowEnabled(true);

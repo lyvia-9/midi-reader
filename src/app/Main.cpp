@@ -8,7 +8,7 @@ namespace reader {
 
 class LookAndFeel : public juce::LookAndFeel_V4 {
 public:
-    LookAndFeel() : juce::LookAndFeel_V4(juce::LookAndFeel_V4::getDarkColourScheme()) {
+    LookAndFeel() : juce::LookAndFeel_V4(colourScheme()) {
         // JUCE 7 不会自动给缺字的字形找后备字体：中文界面必须显式选一个带中文的字体。
         // 名字写错时 JUCE 什么都不画，所以从系统实际有的字体里挑第一个候选。
         const auto installed = juce::Font::findAllTypefaceNames();
@@ -32,12 +32,19 @@ public:
         setColour(juce::PopupMenu::backgroundColourId, panel);
         setColour(juce::PopupMenu::highlightedBackgroundColourId, laneHighlight);
         setColour(juce::ListBox::backgroundColourId, panel);
-        setColour(juce::TooltipWindow::backgroundColourId, juce::Colour(0xf0151718));
+        setColour(juce::TooltipWindow::backgroundColourId, tooltipBg);
         setColour(juce::TooltipWindow::textColourId, ink);
-        setColour(juce::ScrollBar::thumbColourId, juce::Colour(0xff4a4f52));
+        setColour(juce::ScrollBar::thumbColourId, scrollThumb);
         setColour(juce::AlertWindow::backgroundColourId, panel);
     }
     juce::String chosenFont;
+
+private:
+    // JUCE 自带控件（对话框、文件选择框、菜单、勾选框）的底色也从 Theme.h 来
+    static juce::LookAndFeel_V4::ColourScheme colourScheme() {
+        using namespace theme;
+        return {background, panelAlt, panel, line, ink, accent, ink, laneHighlight, ink};
+    }
 };
 
 class MainWindow : public juce::DocumentWindow {

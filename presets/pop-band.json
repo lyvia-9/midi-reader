@@ -1,0 +1,26 @@
+{
+  "format": "midi-reader-preset",
+  "version": 1,
+  "id": "pop-band",
+  "name": "流行乐队",
+  "description": "人声 + 吉他 + 键盘 + 贝斯 + 鼓。默认先用 Demucs 六轨分离，各轨单独扒；鼓用 MuScriptor（Basic Pitch 不扒鼓）。",
+  "route": "stems",
+  "separator": "demucs",
+  "transcriber": "muscriptor",
+  "slots": [
+    { "lane": "主唱", "group": "voices", "role": "melody",
+      "muscriptor": ["voice"], "stem": "vocals", "transcriber": "basic-pitch",
+      "match": ["vocal", "voice", "人声"] },
+    { "lane": "吉他", "instrument": "guitar", "role": "harmony",
+      "muscriptor": ["acoustic_guitar", "clean_electric_guitar", "distorted_electric_guitar"],
+      "stem": "guitar", "transcriber": "basic-pitch", "match": ["guitar"] },
+    { "lane": "键盘", "instrument": "piano", "role": "harmony",
+      "muscriptor": ["acoustic_piano", "electric_piano", "organ"],
+      "stem": "piano", "transcriber": "basic-pitch", "match": ["piano", "keyboard", "organ"] },
+    { "lane": "贝斯", "instrument": "bass_guitar", "role": "bass",
+      "muscriptor": ["electric_bass", "acoustic_bass"],
+      "stem": "bass", "transcriber": "basic-pitch", "match": ["^(?!.*drum).*bass"] },
+    { "lane": "鼓", "instrument": "drums", "role": "rhythm",
+      "muscriptor": ["drums"], "stem": "drums", "transcriber": "muscriptor", "match": ["drum"] }
+  ]
+}

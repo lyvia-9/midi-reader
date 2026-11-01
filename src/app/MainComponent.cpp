@@ -24,7 +24,9 @@ MainComponent::MainComponent() {
     layoutManager.setItemLayout(2, 300, -1.0, -0.75);
 
     openButton.setButtonText(U("打开"));
-    openButton.setTooltip(U("打开 MIDI（Ctrl+O）。也可以把文件直接拖进窗口"));
+    openButton.setTooltip(U("打开 MIDI 或音频（Ctrl+O）。也可以把文件直接拖进窗口；音频会先扒成 MIDI"));
+    audioButton.setButtonText(U("扒谱…"));
+    audioButton.setTooltip(U("选一个音频（wav / mp3 / flac…），按编制预设扒成 MIDI，或先用 Suno 翻唱再扒"));
     playButton.setButtonText(U("播放"));
     playButton.setTooltip(U("空格：播放/暂停"));
     stopButton.setButtonText(U("停止"));
@@ -42,7 +44,7 @@ MainComponent::MainComponent() {
     pitchFit.addItem(U("音高：按乐器音域"), 2);
     pitchFit.setSelectedId(1, juce::dontSendNotification);
     pitchFit.setTooltip(U("按乐器音域时，超出音域的音压在每条的上下边缘"));
-    for (auto* b : {&openButton, &playButton, &stopButton, &fitButton, &reanalyzeButton}) {
+    for (auto* b : {&openButton, &audioButton, &playButton, &stopButton, &fitButton, &reanalyzeButton}) {
         addAndMakeVisible(*b);
         b->setColour(juce::TextButton::buttonColourId, panelAlt);
         b->setWantsKeyboardFocus(false);
@@ -64,6 +66,18 @@ MainComponent::MainComponent() {
     message.setJustificationType(juce::Justification::centredRight);
 
     openButton.onClick = [this] { chooseFile(); };
+    audioButton.onClick = [this] { chooseAudio(); };
+    addChildComponent(jobPanel);
+    jobPanel.onCancel = [this] {
+        if (job == nullptr) return;
+        job->cancel();
+        jobPanel.setCancelling();
+    };
+    jobPanel.onShowLog = [this] {
+        if (job == nullptr) return;
+        const auto log = job->logFile();
+        if (!log.existsAsFile() || !log.startAsProcess()) log.getParentDirectory().revealToUser();
+    };
     playButton.onClick = [this] { transport.togglePlay(); canvas.setFollowEnabled(followToggle.getToggleState()); };
     stopButton.onClick = [this] { transport.stop(); };
     fitButton.onClick = [this] { canvas.fitAll(); };
@@ -97,10 +111,11 @@ MainComponent::MainComponent() {
     side.onLaneSelected = [this](int lane) { canvas.setHighlightedLane(lane); };
     side.onReveal = [this](int lane, double tick) { canvas.revealNote(lane, tick); };
     side.onExpand = [this](int lane) { openDetail(lane); };
-    side.onSoloToggled = [this](int lane) {
-        transport.setSolo(lane);
-        side.setSoloLane(lane);
-    };
+    side.onMuteToggled = [this](int lane) { toggleMute(lane); };
+    side.onSoloToggled = [this](int lane, bool exclusive) { toggleSolo(lane, exclusive); };
+    side.onMixCleared = [this] { mix.clear(); mixChanged(); };
+    canvas.onMuteClicked = [this](int lane) { toggleMute(lane); };
+    canvas.onSoloClicked = [this](int lane, bool exclusive) { toggleSolo(lane, exclusive); };
     side.onMessage = [this](const juce::String& m) { showMessage(m); };
 
     if (transport.audioStatus().isNotEmpty()) showMessage(transport.audioStatus());
@@ -111,6 +126,7 @@ MainComponent::MainComponent() {
 MainComponent::~MainComponent() {
     stopTimer();
     details.clear();
+    job.reset();   // 还在跑就取消，管线会停掉它起的模型进程
 }
 
 void MainComponent::paint(juce::Graphics& g) {
@@ -128,7 +144,7 @@ void MainComponent::paintOverChildren(juce::Graphics& g) {
     g.setColour(accent);
     g.drawRect(getLocalBounds(), 3);
     g.setFont(font(20, true));
-    g.drawText(U("松手打开这个 MIDI"), getLocalBounds(), juce::Justification::centred);
+    g.drawText(dragAudio ? U("松手把这个音频扒成 MIDI") : U("松手打开这个 MIDI"), getLocalBounds(), juce::Justification::centred);
 }
 
 void MainComponent::resized() {
@@ -136,6 +152,8 @@ void MainComponent::resized() {
     auto bar = r.removeFromTop(40).reduced(8, 6);
     r.removeFromTop(1);
     openButton.setBounds(bar.removeFromLeft(60));
+    bar.removeFromLeft(4);
+    audioButton.setBounds(bar.removeFromLeft(64));
     bar.removeFromLeft(14);
     playButton.setBounds(bar.removeFromLeft(56));
     bar.removeFromLeft(4);
@@ -151,6 +169,11 @@ void MainComponent::resized() {
     reanalyzeButton.setBounds(bar.removeFromLeft(90));
     bar.removeFromLeft(10);
     message.setBounds(bar);
+    jobPanel.setVisible(jobPanel.active());
+    if (jobPanel.active()) {
+        jobPanel.setBounds(r.removeFromBottom(JobPanel::preferredHeight));
+        r.removeFromBottom(1);
+    }
     juce::Component* comps[] = {&side, &resizer, &canvas};
     layoutManager.layOutComponents(comps, 3, r.getX(), r.getY(), r.getWidth(), r.getHeight(), false, true);
 }
@@ -186,13 +209,42 @@ void MainComponent::showMessage(const juce::String& m) {
 void MainComponent::documentChanged() {
     canvas.modelChanged();
     side.refresh();
-    if (doc.hasFile()) transport.setSchedule(doc.projection(), doc.tempoMap());
-    else transport.clear();
+    mix.prune(doc.laneModel());
+    mixChanged();
     for (auto& d : details) d->modelChanged();
     if (doc.sidecarStatus().isNotEmpty()) showMessage(doc.sidecarStatus());
 }
 
+void MainComponent::mixChanged() {
+    const auto laneFlags = mix.flags(doc.laneModel());
+    canvas.setLaneMix(laneFlags);
+    side.setLaneMix(laneFlags);
+    if (!doc.hasFile()) {
+        transport.clear();
+        return;
+    }
+    std::vector<bool> silent;
+    for (auto f : laneFlags) silent.push_back((f & mixSilent) != 0);
+    transport.setSchedule(doc.projection(), doc.tempoMap(), silent);
+}
+
+void MainComponent::toggleMute(int lane) {
+    if (!doc.hasFile() || lane < 0 || lane >= doc.laneModel().laneCount()) return;
+    mix.toggleMute(doc.laneModel().laneId(lane));
+    mixChanged();
+}
+
+void MainComponent::toggleSolo(int lane, bool exclusive) {
+    if (!doc.hasFile() || lane < 0 || lane >= doc.laneModel().laneCount()) return;
+    mix.toggleSolo(doc.laneModel().laneId(lane), exclusive);
+    mixChanged();
+}
+
 void MainComponent::openFile(const juce::File& f) {
+    if (isAudioFile(f)) {
+        openAudio(f);
+        return;
+    }
     transport.stop();
     transport.home();
     details.clear();
@@ -204,8 +256,8 @@ void MainComponent::openFile(const juce::File& f) {
     }
     canvas.fitAll();
     grabKeyboardFocus();
-    transport.setSolo(-1);
-    side.setSoloLane(-1);
+    mix.clear();   // 换文件：静音/独奏从头来
+    mixChanged();
     if (auto* p = props.getUserSettings()) p->setValue("lastDir", f.getParentDirectory().getFullPathName());
     if (onTitleChanged) onTitleChanged(f.getFileName());
     int pending = 0;
@@ -216,7 +268,7 @@ void MainComponent::openFile(const juce::File& f) {
 void MainComponent::chooseFile() {
     juce::File start;
     if (auto* p = props.getUserSettings()) start = juce::File(p->getValue("lastDir"));
-    chooser = std::make_unique<juce::FileChooser>(U("打开 MIDI"), start, "*.mid;*.midi;*.rmi");
+    chooser = std::make_unique<juce::FileChooser>(U("打开 MIDI 或音频"), start, "*.mid;*.midi;*.rmi;" + audioFileWildcard());
     chooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
                          [this](const juce::FileChooser& c) {
                              const auto f = c.getResult();
@@ -226,8 +278,21 @@ void MainComponent::chooseFile() {
 
 bool MainComponent::isInterestedInFileDrag(const juce::StringArray& files) {
     for (auto& f : files)
-        if (f.endsWithIgnoreCase(".mid") || f.endsWithIgnoreCase(".midi") || f.endsWithIgnoreCase(".rmi")) return true;
+        if (f.endsWithIgnoreCase(".mid") || f.endsWithIgnoreCase(".midi") || f.endsWithIgnoreCase(".rmi")
+            || isAudioFile(juce::File(f)))
+            return true;
     return false;
+}
+
+void MainComponent::fileDragEnter(const juce::StringArray& files, int, int) {
+    dragOver = true;
+    dragAudio = false;
+    for (auto& f : files)
+        if (isInterestedInFileDrag({f})) {
+            dragAudio = isAudioFile(juce::File(f));
+            break;
+        }
+    repaint();
 }
 
 void MainComponent::filesDropped(const juce::StringArray& files, int, int) {
@@ -252,7 +317,129 @@ bool MainComponent::keyPressed(const juce::KeyPress& k) {
         || k == juce::KeyPress('y', juce::ModifierKeys::commandModifier, 0)) { showMessage(doc.redo()); return true; }
     if (k == juce::KeyPress('o', juce::ModifierKeys::commandModifier, 0)) { chooseFile(); return true; }
     if (k.getTextCharacter() == 'f' || k.getTextCharacter() == 'F') { canvas.fitAll(); return true; }
+    // M / S：对选中的那条声部（Ctrl+S = 只听这一条）
+    const auto c = juce::CharacterFunctions::toLowerCase(k.getTextCharacter());
+    if ((c == 'm' || c == 's') && canvas.highlightedLane() >= 0) {
+        if (c == 'm') toggleMute(canvas.highlightedLane());
+        else toggleSolo(canvas.highlightedLane(), k.getModifiers().isCommandDown());
+        return true;
+    }
+    if (k == juce::KeyPress('s', juce::ModifierKeys::commandModifier, 0) && canvas.highlightedLane() >= 0) {
+        toggleSolo(canvas.highlightedLane(), true);
+        return true;
+    }
     return false;
+}
+
+// ---- 音频：扒谱 / 翻唱 ----
+
+void MainComponent::chooseAudio() {
+    juce::File start;
+    if (auto* p = props.getUserSettings()) start = juce::File(p->getValue("lastAudioDir", p->getValue("lastDir")));
+    chooser = std::make_unique<juce::FileChooser>(U("选一个要扒谱的音频"), start, audioFileWildcard());
+    chooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+                         [this](const juce::FileChooser& c) {
+                             const auto f = c.getResult();
+                             if (f.existsAsFile()) openAudio(f);
+                         });
+}
+
+void MainComponent::openAudio(const juce::File& f) {
+    if (job != nullptr) {
+        showMessage(U("已经有一个扒谱任务在跑：等它完成，或点底下的“取消”"));
+        return;
+    }
+    auto* settings = props.getUserSettings();
+    if (settings) settings->setValue("lastAudioDir", f.getParentDirectory().getFullPathName());
+    juce::Component::SafePointer<MainComponent> safe(this);
+    AudioJobDialog::show(f, settings, [safe](AudioJobRequest r) {
+        if (safe != nullptr) safe->startAudioJob(r);
+    });
+}
+
+void MainComponent::startAudioJob(const AudioJobRequest& r) {
+    jobResult = juce::var();
+    jobError = juce::var();
+    job = std::make_unique<PipelineJob>(PipelineLocation::find(props.getUserSettings()), r.method, r.params,
+                                        PipelineJob::Callbacks{[this](const juce::var& m) { audioJobMessage(m); },
+                                                               [this] { audioJobFinished(); }});
+    if (!job->start()) {
+        const auto err = job->startError();
+        job.reset();
+        juce::AlertWindow::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon, U("扒谱没能开始"), err);
+        return;
+    }
+    jobPanel.begin(r.title);
+    resized();
+}
+
+static juce::String stepText(const juce::var& e) {
+    // step 是 "02-transcribe-bass" 这种：去掉序号，认出做什么、哪一轨
+    auto label = e["step"].toString().fromFirstOccurrenceOf("-", false, false);
+    const auto what = label.upToFirstOccurrenceOf("-", false, false);
+    const auto stem = label.fromFirstOccurrenceOf("-", false, false);
+    static const std::map<juce::String, const char*> whats{
+        {"separate", "分离音轨"}, {"transcribe", "扒谱"}, {"cover", "翻唱"}};
+    static const std::map<juce::String, const char*> stems{
+        {"vocals", "人声"}, {"drums", "鼓"}, {"bass", "贝斯"}, {"guitar", "吉他"}, {"piano", "键盘"}, {"other", "其他"}};
+    static const std::map<juce::String, const char*> providers{
+        {"muscriptor", "MuScriptor"}, {"demucs", "Demucs"}, {"basic-pitch", "Basic Pitch"}, {"sunoapi", "Suno"}};
+    auto pick = [](const auto& m, const juce::String& k) {
+        auto it = m.find(k);
+        return it == m.end() ? k : juce::String::fromUTF8(it->second);
+    };
+    auto out = pick(whats, what);
+    if (stem.isNotEmpty()) out << U(" · ") << pick(stems, stem);
+    out << U(" · ") << pick(providers, e["provider"].toString());
+    return out;
+}
+
+void MainComponent::audioJobMessage(const juce::var& m) {
+    const auto ev = m["event"].toString();
+    if (ev == "step") jobPanel.setStep(stepText(m));
+    else if (ev == "progress") {
+        const auto text = m["message"].toString();
+        double f = m["fraction"].isVoid() || m["fraction"].isUndefined() ? -1.0 : (double)m["fraction"];
+        if (f < 0) f = progressFromText(text);
+        jobPanel.setProgress(f, text);
+    } else if (m.hasProperty("result")) jobResult = m["result"];
+    else if (m.hasProperty("error")) jobError = m["error"];
+}
+
+void MainComponent::audioJobFinished() {
+    jobPanel.end();
+    resized();
+    const auto result = jobResult, error = jobError;
+    const auto log = job ? job->logFile() : juce::File();
+    // PipelineJob 正在回调里，下一轮消息循环再删
+    juce::Component::SafePointer<MainComponent> safe(this);
+    juce::MessageManager::callAsync([safe] { if (safe != nullptr) safe->job.reset(); });
+
+    if (result.isObject()) {
+        const juce::File midi(result["midi"].toString());
+        if (midi.existsAsFile()) {
+            openFile(midi);
+            showMessage(U("扒好了：") + midi.getParentDirectory().getFileName());
+            return;
+        }
+        // 只翻唱不扒（现在界面上不会出现，留着兜底）：告诉用户新音频在哪
+        juce::StringArray audios;
+        if (auto* a = result["audio"].getArray()) for (auto& v : *a) audios.add(v.toString());
+        juce::AlertWindow::showMessageBoxAsync(juce::MessageBoxIconType::InfoIcon, U("翻唱好了"), audios.joinIntoString("\n"));
+        return;
+    }
+    const auto type = error["type"].toString();
+    if (type == "cancelled") {
+        showMessage(U("已取消"));
+        return;
+    }
+    auto text = error["message"].toString();
+    if (type == "unavailable") text << U("\n\n缺的东西在扒谱对话框里会列出来；HF token、Suno API key 填在 providers.json，对话框里有“打开配置文件”。");
+    juce::AlertWindow::showOkCancelBox(juce::MessageBoxIconType::WarningIcon, U("扒谱失败"), text, U("看日志"), U("关闭"), this,
+                                       juce::ModalCallbackFunction::create([log](int r) {
+                                           if (r == 1 && log.existsAsFile() && !log.startAsProcess())
+                                               log.getParentDirectory().revealToUser();
+                                       }));
 }
 
 void MainComponent::openDetail(int lane) {

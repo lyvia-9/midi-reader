@@ -1,0 +1,26 @@
+{
+  "format": "midi-reader-preset",
+  "version": 1,
+  "id": "orchestra",
+  "name": "双管编制管弦乐队",
+  "description": "木管、铜管、定音鼓、竖琴、弦乐五部，整曲交给 MuScriptor。开源分离模型分不出管弦乐的各组，所以不走分轨路线。",
+  "route": "full",
+  "transcriber": "muscriptor",
+  "slots": [
+    { "lane": "长笛", "instrument": "flute", "role": "melody", "muscriptor": ["flutes"], "match": ["flute"] },
+    { "lane": "双簧管", "instrument": "oboe", "role": "melody", "muscriptor": ["oboe"], "match": ["oboe"] },
+    { "lane": "单簧管", "instrument": "clarinet", "role": "harmony", "muscriptor": ["clarinet"], "match": ["clarinet"] },
+    { "lane": "大管", "instrument": "bassoon", "role": "bass", "muscriptor": ["bassoon"], "match": ["bassoon"] },
+    { "lane": "圆号", "instrument": "horn", "role": "harmony", "muscriptor": ["french_horn"], "match": ["horn"] },
+    { "lane": "小号", "instrument": "trumpet", "role": "melody", "muscriptor": ["trumpet"], "match": ["trumpet"] },
+    { "lane": "长号", "instrument": "trombone", "role": "harmony", "muscriptor": ["trombone"], "match": ["trombone"] },
+    { "lane": "大号", "instrument": "tuba", "role": "bass", "muscriptor": ["tuba"], "match": ["tuba"] },
+    { "lane": "定音鼓", "instrument": "timpani", "role": "rhythm", "muscriptor": ["timpani"], "match": ["timpani"] },
+    { "lane": "竖琴", "instrument": "harp", "role": "harmony", "muscriptor": ["orchestral_harp"], "match": ["harp"] },
+    { "lane": "小提琴", "instrument": "violin", "role": "melody", "muscriptor": ["violin"], "match": ["violin"] },
+    { "lane": "中提琴", "instrument": "viola", "role": "harmony", "muscriptor": ["viola"], "match": ["viola"] },
+    { "lane": "大提琴", "instrument": "cello", "role": "bass", "muscriptor": ["cello"], "match": ["cello"] },
+    { "lane": "低音提琴", "instrument": "contrabass", "role": "bass", "muscriptor": ["contrabass"], "match": ["contrabass", "double bass"] },
+    { "lane": "弦乐组", "instrument": "string_section", "role": "harmony", "muscriptor": ["string_ensemble"], "match": ["string"] }
+  ]
+}

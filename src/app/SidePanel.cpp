@@ -40,11 +40,23 @@ public:
         }
         auto r = juce::Rectangle<int>(10, 2, w - 14, h - 4);
         auto right = r.removeFromRight(70);
+        const auto mf = owner.mixOf(row);
+        auto nameRow = r.removeFromTop(r.getHeight() / 2 + 1);
+        // 静音 / 独奏的小标记，放在名字前面
+        auto badge = [&](const char* text, juce::Colour c) {
+            auto b = nameRow.removeFromLeft(15).withSizeKeepingCentre(15, 14).toFloat();
+            nameRow.removeFromLeft(4);
+            g.setColour(c);
+            g.fillRoundedRectangle(b, 3);
+            g.setColour(background);
+            g.setFont(font(10, true));
+            g.drawText(text, b, juce::Justification::centred);
+        };
+        if (mf & mixSoloed) badge("S", soloOn);
+        if (mf & mixMuted) badge("M", muteOn);
         g.setFont(font(13));
-        g.setColour(ink);
-        juce::String name = info.name;
-        if (owner.soloLane == row) name = U("[独奏] ") + name;
-        g.drawFittedText(name, r.removeFromTop(r.getHeight() / 2 + 1), juce::Justification::centredLeft, 1, .85f);
+        g.setColour((mf & mixSilent) ? muted : ink);
+        g.drawFittedText(info.name, nameRow, juce::Justification::centredLeft, 1, .85f);
         g.setFont(font(11));
         g.setColour(muted);
         juce::String sub;
@@ -192,8 +204,8 @@ public:
             juce::String chip;
             juce::Colour cc;
             if (d->status == core::statusReview) { chip = U("待确认"); cc = warn; }
-            else if (d->status == core::statusAuto) { chip = U("已自动"); cc = juce::Colour(0xff7fb069); }
-            else if (d->status == core::statusConfirmed) { chip = U("你确认了"); cc = juce::Colour(0xff6fa8dc); }
+            else if (d->status == core::statusAuto) { chip = U("已自动"); cc = chipAuto; }
+            else if (d->status == core::statusConfirmed) { chip = U("你确认了"); cc = chipConfirmed; }
             else { chip = U("你否决了"); cc = muted; }
             g.setFont(font(11, true));
             const int cw = g.getCurrentFont().getStringWidth(chip) + 10;
@@ -305,8 +317,8 @@ void SidePanel::setHighlightedLane(int lane) {
     lanes->suppress = false;
 }
 
-void SidePanel::setSoloLane(int lane) {
-    soloLane = lane;
+void SidePanel::setLaneMix(std::vector<std::uint8_t> laneFlags) {
+    mix = std::move(laneFlags);
     lanes->repaint();
 }
 
@@ -464,9 +476,14 @@ void SidePanel::showLaneMenu(int lane) {
                   [this, laneId, lane] { runAndReport(doc.moveLane(laneId, lane + 1)); });
     }
     m.addSeparator();
-    m.addItem(soloLane == lane ? U("取消独奏") : U("独奏这条"), [this, lane] {
-        if (onSoloToggled) onSoloToggled(soloLane == lane ? -1 : lane);
-    });
+    const auto mf = mixOf(lane);
+    m.addItem(U("静音（M）"), true, (mf & mixMuted) != 0, [this, lane] { if (onMuteToggled) onMuteToggled(lane); });
+    m.addItem(U("独奏（S）"), true, (mf & mixSoloed) != 0, [this, lane] { if (onSoloToggled) onSoloToggled(lane, false); });
+    m.addItem(U("只听这一条"), [this, lane] { if (onSoloToggled) onSoloToggled(lane, true); });
+    bool anyMix = false;
+    for (auto f : mix) anyMix |= (f & (mixMuted | mixSoloed)) != 0;
+    m.addItem(U("取消所有静音和独奏"), anyMix, false, [this] { if (onMixCleared) onMixCleared(); });
+    m.addSeparator();
     m.addItem(U("细看（完整钢琴窗）"), [this, lane] { if (onExpand) onExpand(lane); });
     m.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(nullptr));
 }

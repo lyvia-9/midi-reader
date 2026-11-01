@@ -26,11 +26,12 @@ void Transport::audioDeviceIOCallbackWithContext(const float* const*, int, float
     engine.render(out, numOut, numSamples);
 }
 
-void Transport::setSchedule(const core::Projection& p, const core::TempoMap& tm) {
+void Transport::setSchedule(const core::Projection& p, const core::TempoMap& tm, const std::vector<bool>& silent) {
     tempo = tm;
     std::vector<pianoroll::PlaybackNote> notes;
     int source = 0;
     for (size_t li = 0; li < p.lanes.size(); ++li) {
+        if (li < silent.size() && silent[li]) continue;
         for (auto& n : p.lanes[li].notes) {
             if (n.flags & core::noteFlagKeySwitch) continue;   // keyswitch 不出声
             pianoroll::PlaybackNote pn;
@@ -62,7 +63,6 @@ void Transport::pause() { engine.pause(); }
 void Transport::stop() { engine.stop(); }
 void Transport::home() { engine.home(); }
 void Transport::seekTick(double tick) { engine.seek(tempo.secondsAt(tick)); }
-void Transport::setSolo(int lane) { engine.setSolo(lane); }
 double Transport::positionTick() const { return tempo.tickAt(engine.position()); }
 
 } // namespace reader
