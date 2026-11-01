@@ -112,6 +112,7 @@ Windows 上把 `.venv/bin/` 换成 `.venv\Scripts\`。
 | `reader_proto/analyze.py` | 建初始映射、跑规则（keyswitch ⇄ 八度互相喂），以及用户修正后的重算 |
 | `reader_proto/project.py` | 投影：原 MIDI + sidecar → 逻辑声部 |
 | `reader_proto/export.py` | 写检查用 MIDI（用 symusic） |
-| `reader_proto/pipeline/` | 音频管线：`base.py` 接口，`providers/` 各家模型和服务，`presets.py` 编制预设，`run.py` 配方，`merge.py` 拼分轨 MIDI，`worker.py` stdio 协议 |
+| `reader_proto/pipeline/` | 音频管线：`base.py` 接口，`providers/` 各家模型和服务，`presets.py` 编制预设，`run.py` 配方，`merge.py` 拼分轨 MIDI，`worker.py` stdio 协议和阅读器用的单次模式 |
+| `pipeline_worker.py` | 阅读器启动管线的入口（`python pipeline_worker.py job request.json`），见 `docs/audio-pipeline.md` 第 11 节 |
 
 为什么读 MIDI 不用 symusic：symusic 载入时按 (轨, 通道, 音色) 重新分组，丢掉了原始轨号和通道号，没法做“按通道拆轨”，sourceNote 也对不上 C++ 那边的 JUCE `MidiFile`。所以读取用了一个两百行的规范解析器，symusic 用来写导出文件，并在测试里交叉校验音符是否一致。

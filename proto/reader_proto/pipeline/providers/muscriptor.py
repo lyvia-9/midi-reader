@@ -10,6 +10,9 @@ Windows 上用 NVIDIA 显卡：命令改成 ["uvx", "--torch-backend=cu128", "mu
 """
 from __future__ import annotations
 
+import os
+from pathlib import Path
+
 from ..base import Artifact, Capability, Context, Manifest, PipelineError, Provider, Task
 from . import _proc
 
@@ -45,7 +48,23 @@ class MuScriptor(Provider):
         return _proc.command(self.config, ["uvx", f"muscriptor@{PINNED}"])
 
     def problems(self) -> list[str]:
-        return _proc.missing_command(self._cmd())
+        out = _proc.missing_command(self._cmd())
+        if not self._has_token():
+            out.append("没有 Hugging Face token：先在 huggingface.co/MuScriptor/muscriptor-medium 同意许可，"
+                       "再在 providers.json 的 muscriptor.hfToken 填 token")
+        return out
+
+    def _has_token(self) -> bool:
+        model = self.config.get("model")
+        if model and Path(str(model)).exists():   # 本地权重文件不用下载
+            return True
+        if self.config.get("hfToken") or os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN"):
+            return True
+        # `hf auth login` 存的 token
+        if os.environ.get("HF_TOKEN_PATH") and Path(os.environ["HF_TOKEN_PATH"]).exists():
+            return True
+        hf_home = Path(os.environ.get("HF_HOME") or Path.home() / ".cache" / "huggingface")
+        return (hf_home / "token").exists()
 
     def cache_identity(self) -> dict:
         keys = ("model", "quantize", *PASSTHROUGH)

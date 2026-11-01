@@ -215,7 +215,25 @@ song.wav.pipeline/20261101-112159-transcribe-pop-band/
 
 ## 11. 阅读器怎么调：stdio JSON 行协议
 
-阅读器启动 `python -m reader_proto.pipeline worker`（以后可以换成打包好的 exe），一行一个 JSON。代码：`pipeline/worker.py`。
+阅读器（`src/app/AudioPipeline.cpp`）用的是**单次模式**：一个任务起一个进程，
+
+```
+<proto>\.venv\Scripts\python.exe -X utf8 <proto>\pipeline_worker.py job <任务目录>\request.json
+```
+
+`request.json` 是 `{"method": …, "params": {…}, "cancelFile": "…", "logFile": "…"}`。stdout 照下面的协议一行一个 JSON（id 固定是 1），跑完就退出。这么做是因为 JUCE 的 ChildProcess 只能读子进程的 stdout，写不了 stdin，也设不了工作目录和环境变量：
+
+- **取消**：阅读器建 `cancelFile`，管线每 0.2 秒看一次，看到就停掉它起的模型进程，再回一个 `cancelled` 错误
+- **日志**：stderr（包括 Python 异常栈、模型的原始输出）写到 `logFile`，不混进 stdout；任务条和报错框的“看日志”打开的就是它
+- **不用设工作目录**：`pipeline_worker.py` 在 proto 目录里，Python 会把脚本所在目录放进 `sys.path`
+- **不弹黑窗口**：阅读器起 Python 用 `CREATE_NO_WINDOW`；管线起模型命令时 Windows 上也加了这个标志
+- 任务目录在系统临时目录的 `midi-reader-jobs\` 下，一周后自动清掉
+
+阅读器打开音频时先跑一次 `catalog`（预设、各 provider 的 `problems`、配置文件位置），据此填对话框、判断“开始”能不能点。`cover` 可以带 `thenTranscribe: {preset, route?, transcriber?}`，翻唱完拿第一个版本接着扒，和命令行的 `--then-transcribe` 一样。
+
+**阅读器怎么找管线**：设置里记住的文件夹（对话框里“更改管线位置…”）→ 环境变量 `MIDI_READER_PROTO` → 从 exe 往上找含 `proto/pipeline_worker.py` 的目录（从仓库里编出来的 exe 自动找到）。Python 用 `proto/.venv` 里的（`setup.bat` 建的）。
+
+长驻的 `worker` 模式（stdin 进、stdout 出）也还在，给以后打包成独立 exe 或包成 MCP server 用：
 
 ```
 → {"id": 1, "method": "hello"}
@@ -269,4 +287,4 @@ song.wav.pipeline/20261101-112159-transcribe-pop-band/
 - **MuScriptor 还没真跑过**：要你的 HF token。拿到后先用 `pop-band` 和 `orchestra` 各跑一首真曲子
 - **sunoapi 还没用真 key 跑过**：解析是照 OpenAPI 写的，第一次真跑后看 `raw/` 里的原始响应核对一遍
 - 预设只能整轨认领，不能按音域或时间段拆分一条轨
-- 阅读器这边（打开音频、选预设、看进度、取消）还没做，C++ 侧照第 11 节的协议接
+- 阅读器的扒谱入口已经接上（第 11 节）。还没做：在界面里看 `run.json`、在几次运行之间切换、翻唱只要音频不扒谱

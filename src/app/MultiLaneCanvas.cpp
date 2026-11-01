@@ -311,7 +311,7 @@ void MultiLaneCanvas::paint(juce::Graphics& g) {
     if (model.laneCount() == 0) {
         g.setColour(muted);
         g.setFont(font(15));
-        g.drawFittedText(juce::String::fromUTF8("把 MIDI 文件拖到这里，或点左上角“打开”"), getLocalBounds(),
+        g.drawFittedText(juce::String::fromUTF8("把 MIDI 文件拖到这里，或点左上角“打开”\n音频文件（wav / mp3 / flac…）也可以：会先按编制预设扒成 MIDI"), getLocalBounds(),
                          juce::Justification::centred, 2);
         return;
     }

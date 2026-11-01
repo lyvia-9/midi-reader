@@ -5,7 +5,8 @@
     python -m reader_proto.pipeline transcribe song.wav --preset pop-band [--route full|stems]
     python -m reader_proto.pipeline cover song.wav --style "lofi jazz" [--then-transcribe pop-band]
     python -m reader_proto.pipeline credits                         # sunoapi 剩余点数
-    python -m reader_proto.pipeline worker                          # 给阅读器用的 stdio 接口
+    python -m reader_proto.pipeline worker                          # stdio JSON 行协议
+    python -m reader_proto.pipeline job request.json                # 阅读器用：跑一个请求就退出
 """
 from __future__ import annotations
 
@@ -38,6 +39,8 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("presets", help="列出内置预设")
     sub.add_parser("credits", help="sunoapi 剩余点数")
     sub.add_parser("worker", help="stdin/stdout JSON 行协议")
+    p = sub.add_parser("job", help="阅读器用：跑请求文件里的一个请求，结果按 worker 协议写到 stdout")
+    p.add_argument("request", type=Path)
 
     p = sub.add_parser("transcribe", help="音频 → 按预设整理好的 MIDI + sidecar")
     p.add_argument("audio", type=Path)
@@ -66,6 +69,9 @@ def main(argv: list[str] | None = None) -> int:
         from .worker import Worker
         Worker(sys.stdout, config).serve(sys.stdin)
         return 0
+    if args.cmd == "job":
+        from .worker import run_job
+        return run_job(args.request, sys.stdout, config)
     if args.cmd == "providers":
         for pid in REG.BUILTIN:
             prov = REG.create(pid, config)

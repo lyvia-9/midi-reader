@@ -23,7 +23,7 @@ from reader_proto.pipeline.providers.fake import Fake, _silence
 from reader_proto.pipeline.providers.muscriptor import MuScriptor
 from reader_proto.pipeline.providers.sunoapi import SunoApi
 from reader_proto.pipeline.run import Runner
-from reader_proto.pipeline.worker import Worker
+from reader_proto.pipeline.worker import Worker, run_job
 from reader_proto.smf import read_smf
 
 
@@ -200,6 +200,32 @@ def test_muscriptor_command(tmp_path, audio):
         m.build_command(Task(Capability.TRANSCRIBE, [Artifact("audio", audio)], {"instruments": ["kazoo"]}), "o")
 
 
+def test_proc_runs_real_command(tmp_path):
+    import sys
+    from reader_proto.pipeline.providers import _proc
+    lines = []
+    ctx = Context(tmp_path, progress=lambda f, m: lines.append(m))
+    _proc.run([sys.executable, "-c", "print('一'); print('two')"], ctx, env={"X": "1"})
+    assert lines[1:] == ["一", "two"]
+    with pytest.raises(PipelineError, match="退出码 3"):
+        _proc.run([sys.executable, "-c", "print('boom'); raise SystemExit(3)"], ctx)
+
+
+def test_muscriptor_needs_token(tmp_path, monkeypatch):
+    for k in ("HF_TOKEN", "HUGGING_FACE_HUB_TOKEN", "HF_TOKEN_PATH"):
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setenv("HF_HOME", str(tmp_path / "hf"))
+    cmd = {"command": ["python"]}                       # 只看 token，不看 uvx 装没装
+    assert any("token" in p for p in MuScriptor(cmd).problems())
+    assert MuScriptor({**cmd, "hfToken": "hf_x"}).problems() == []
+    weights = tmp_path / "w.safetensors"
+    weights.write_bytes(b"")
+    assert MuScriptor({**cmd, "model": str(weights)}).problems() == []
+    (tmp_path / "hf").mkdir()
+    (tmp_path / "hf" / "token").write_text("hf_x")      # `hf auth login` 留下的
+    assert MuScriptor(cmd).problems() == []
+
+
 def test_demucs_and_basic_pitch_commands(tmp_path, audio):
     d = Demucs({"command": ["python", "-m", "demucs"]})
     cmd = d.build_command(Task(Capability.SEPARATE, [Artifact("audio", audio)]), tmp_path)
@@ -373,3 +399,64 @@ def test_worker_cancel(tmp_path, audio):
     assert {"id": 2, "result": {"cancelled": True}} in msgs
     assert any(m.get("id") == 1 and m.get("error", {}).get("type") == "cancelled" for m in msgs)
     assert not list((tmp_path / "cache").glob("*/*.partial"))      # 半截的结果不留在缓存里
+
+
+# ---- 单次模式（阅读器用） ----
+
+def _job(tmp_path, request, providers):
+    req = tmp_path / "request.json"
+    req.write_text(json.dumps(request), encoding="utf-8")
+    out = io.StringIO()
+    rc = run_job(req, out, Config(), lambda on_event, cancel: Runner(
+        cache=Cache(tmp_path / "cache"), on_event=on_event, cancel=cancel, providers=providers), poll=0.01)
+    return rc, [json.loads(l) for l in out.getvalue().splitlines()]
+
+
+def test_job_catalog(tmp_path):
+    rc, msgs = _job(tmp_path, {"method": "catalog"}, {})
+    assert rc == 0 and len(msgs) == 1
+    cat = msgs[0]["result"]
+    assert {p["id"] for p in cat["presets"]} >= {"pop-band", "orchestra"}
+    assert {p["id"] for p in cat["providers"]} >= {"muscriptor", "demucs", "sunoapi"}
+    assert cat["config"].endswith("providers.json")
+    pop = next(p for p in cat["presets"] if p["id"] == "pop-band")
+    assert pop["stemTranscribers"] == ["basic-pitch", "muscriptor"] and pop["separator"] == "demucs"
+    assert next(p for p in cat["presets"] if p["id"] == "orchestra")["stemTranscribers"] is None
+
+
+def test_job_transcribe_writes_log_and_result(tmp_path, audio):
+    log = tmp_path / "worker.log"
+    rc, msgs = _job(tmp_path, {"method": "transcribe", "logFile": str(log),
+                               "params": {"audio": str(audio), "preset": "string-quartet",
+                                          "outDir": str(tmp_path / "run")}},
+                    {"muscriptor": _named(Fake(), MuScriptor)})
+    assert rc == 0 and all(m["id"] == 1 for m in msgs)
+    assert msgs[0]["event"] == "step"
+    assert Path(msgs[-1]["result"]["midi"]).exists()
+    assert log.exists()
+
+
+def test_job_cancel_file(tmp_path, audio):
+    cancel = tmp_path / "cancel"
+
+    class Slow(Fake):
+        def run(self, task, ctx):
+            cancel.touch()                  # 阅读器这时候点了取消
+            while not ctx.cancelled:
+                threading.Event().wait(0.01)
+            ctx.check_cancelled()
+
+    rc, msgs = _job(tmp_path, {"method": "transcribe", "cancelFile": str(cancel),
+                               "params": {"audio": str(audio), "preset": "orchestra", "outDir": str(tmp_path / "run")}},
+                    {"muscriptor": Slow()})
+    assert msgs[-1]["error"]["type"] == "cancelled"
+
+
+def test_job_cover_then_transcribe(tmp_path, audio):
+    rc, msgs = _job(tmp_path, {"method": "cover", "params": {
+        "audio": str(audio), "options": {"style": "lofi"}, "provider": "fake", "outDir": str(tmp_path / "run"),
+        "thenTranscribe": {"preset": "string-quartet"}}},
+        {"fake": Fake(), "muscriptor": _named(Fake(), MuScriptor)})
+    res = msgs[-1]["result"]
+    assert len(res["audio"]) == 1 and Path(res["midi"]).exists()
+    assert Path(res["midi"]).parent.name == "transcribe-string-quartet"

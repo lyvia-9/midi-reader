@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import sys
 import threading
 from collections import deque
 from pathlib import Path
@@ -26,8 +27,11 @@ def run(cmd: list[str], ctx: Context, cwd: Path | None = None, env: dict[str, st
     if env:
         full_env = dict(os.environ)
         full_env.update(env)
+    # 阅读器是窗口程序、没有控制台：不加这个标志，Windows 会给每个命令行子进程弹一个黑窗口
+    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if sys.platform == "win32" else 0
     proc = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=full_env,
-                            stdin=subprocess.DEVNULL, text=True, encoding="utf-8", errors="replace")
+                            stdin=subprocess.DEVNULL, text=True, encoding="utf-8", errors="replace",
+                            creationflags=flags)
     tail: deque[str] = deque(maxlen=20)
 
     def pump() -> None:
