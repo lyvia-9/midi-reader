@@ -15,7 +15,9 @@ public:
     ~Transport() override;
 
     juce::String audioStatus() const { return status; }
-    void setSchedule(const core::Projection&, const core::TempoMap&);   // 投影换了就调
+    // 投影或静音/独奏换了就调。silent[i] 为真的声部不进播放数据（引擎自带的独奏只能独奏一组、
+    // 没有静音，所以在这边按声部过滤）。引擎换数据时保留播放位置，播放中切换也不会跳。
+    void setSchedule(const core::Projection&, const core::TempoMap&, const std::vector<bool>& silent = {});
     void clear();
 
     void togglePlay();
@@ -24,8 +26,6 @@ public:
     void stop();
     void home();
     void seekTick(double tick);
-    void setSolo(int laneIndex);   // -1 = 全部
-    int solo() const { return engine.solo(); }
     bool isPlaying() const { return engine.isPlaying(); }
     double positionTick() const;
     double positionSeconds() const { return engine.position(); }

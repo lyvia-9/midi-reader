@@ -2,6 +2,7 @@
 // GPL-3.0（链接 PianoRollCore）
 // 对应接口设计文档“头文件草稿”；比草稿多了竖向滚动（几十条声部放不下一屏）和悬停提示。
 #pragma once
+#include "app/LaneMix.h"
 #include "app/LaneModel.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -25,7 +26,8 @@ struct LaneLayout {
     bool showKeySwitches = false;
 };
 
-class MultiLaneCanvas : public juce::Component, private juce::ScrollBar::Listener, private juce::Timer {
+class MultiLaneCanvas : public juce::Component, public juce::TooltipClient,
+                        private juce::ScrollBar::Listener, private juce::Timer {
 public:
     explicit MultiLaneCanvas(LaneModel&);
     ~MultiLaneCanvas() override;
@@ -47,6 +49,7 @@ public:
     void setHighlightedLane(int lane);           // -1 = 无
     int highlightedLane() const { return highlighted; }
     void revealNote(int lane, double time);
+    void setLaneMix(std::vector<std::uint8_t> laneFlags);   // LaneMixFlag，每条声部一个
 
     std::function<void(double time)> onSeek;
     std::function<void(int lane)> onLaneClicked;
@@ -55,6 +58,10 @@ public:
     std::function<void(pianoroll::ViewState)> onViewChanged;
     std::function<void(int lane, const LaneNote&, juce::Point<int> screenPos)> onNoteRightClicked;
     std::function<void(int lane, juce::Point<int> screenPos)> onLaneRightClicked;
+    std::function<void(int lane)> onMuteClicked;                    // 行头的 M
+    std::function<void(int lane, bool exclusive)> onSoloClicked;    // 行头的 S；Ctrl+点击 = 只听这一条
+
+    juce::String getTooltip() override;
 
     void paint(juce::Graphics&) override;
     void resized() override;
@@ -90,6 +97,9 @@ private:
     void paintHeader(juce::Graphics&, const Row&, juce::Rectangle<float>);
     void paintHover(juce::Graphics&);
     int rowAt(juce::Point<float>) const;
+    juce::Rectangle<float> mixButton(juce::Rectangle<float> header, bool solo) const;
+    int mixButtonAt(juce::Point<float>, int& lane) const;   // 0 = 不在按钮上，1 = M，2 = S
+    std::uint8_t mixOf(int lane) const { return lane >= 0 && (size_t)lane < mix.size() ? mix[(size_t)lane] : 0; }
     const LaneNote* noteAt(int lane, juce::Point<float>) const;
     juce::Colour noteColour(const LaneNote&, juce::Colour laneColour) const;
     pianoroll::NavigationLimits navLimits() const;
@@ -113,6 +123,7 @@ private:
     pianoroll::MeterMap meter;
     std::uint64_t seenRevision = ~std::uint64_t(0);
     int highlighted = -1;
+    std::vector<std::uint8_t> mix;
     std::unique_ptr<PlayheadOverlay> playhead;
     juce::ScrollBar vbar{true}, hbar{false};
     float scrollY = 0;

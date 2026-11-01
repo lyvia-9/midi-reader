@@ -45,9 +45,13 @@ private:
     void openDetail(int lane);
     void showNoteMenu(int lane, const LaneNote&);
     void updateTransportButtons();
+    void mixChanged();   // 静音/独奏或投影换了：重排播放数据，刷新画布和左栏
+    void toggleMute(int lane);
+    void toggleSolo(int lane, bool exclusive);
 
     Document doc;
     Transport transport;
+    LaneMix mix;
     MultiLaneCanvas canvas{doc.laneModel()};
     SidePanel side{doc};
     juce::StretchableLayoutManager layoutManager;

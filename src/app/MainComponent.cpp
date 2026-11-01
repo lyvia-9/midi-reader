@@ -111,10 +111,11 @@ MainComponent::MainComponent() {
     side.onLaneSelected = [this](int lane) { canvas.setHighlightedLane(lane); };
     side.onReveal = [this](int lane, double tick) { canvas.revealNote(lane, tick); };
     side.onExpand = [this](int lane) { openDetail(lane); };
-    side.onSoloToggled = [this](int lane) {
-        transport.setSolo(lane);
-        side.setSoloLane(lane);
-    };
+    side.onMuteToggled = [this](int lane) { toggleMute(lane); };
+    side.onSoloToggled = [this](int lane, bool exclusive) { toggleSolo(lane, exclusive); };
+    side.onMixCleared = [this] { mix.clear(); mixChanged(); };
+    canvas.onMuteClicked = [this](int lane) { toggleMute(lane); };
+    canvas.onSoloClicked = [this](int lane, bool exclusive) { toggleSolo(lane, exclusive); };
     side.onMessage = [this](const juce::String& m) { showMessage(m); };
 
     if (transport.audioStatus().isNotEmpty()) showMessage(transport.audioStatus());
@@ -208,10 +209,35 @@ void MainComponent::showMessage(const juce::String& m) {
 void MainComponent::documentChanged() {
     canvas.modelChanged();
     side.refresh();
-    if (doc.hasFile()) transport.setSchedule(doc.projection(), doc.tempoMap());
-    else transport.clear();
+    mix.prune(doc.laneModel());
+    mixChanged();
     for (auto& d : details) d->modelChanged();
     if (doc.sidecarStatus().isNotEmpty()) showMessage(doc.sidecarStatus());
+}
+
+void MainComponent::mixChanged() {
+    const auto laneFlags = mix.flags(doc.laneModel());
+    canvas.setLaneMix(laneFlags);
+    side.setLaneMix(laneFlags);
+    if (!doc.hasFile()) {
+        transport.clear();
+        return;
+    }
+    std::vector<bool> silent;
+    for (auto f : laneFlags) silent.push_back((f & mixSilent) != 0);
+    transport.setSchedule(doc.projection(), doc.tempoMap(), silent);
+}
+
+void MainComponent::toggleMute(int lane) {
+    if (!doc.hasFile() || lane < 0 || lane >= doc.laneModel().laneCount()) return;
+    mix.toggleMute(doc.laneModel().laneId(lane));
+    mixChanged();
+}
+
+void MainComponent::toggleSolo(int lane, bool exclusive) {
+    if (!doc.hasFile() || lane < 0 || lane >= doc.laneModel().laneCount()) return;
+    mix.toggleSolo(doc.laneModel().laneId(lane), exclusive);
+    mixChanged();
 }
 
 void MainComponent::openFile(const juce::File& f) {
@@ -230,8 +256,8 @@ void MainComponent::openFile(const juce::File& f) {
     }
     canvas.fitAll();
     grabKeyboardFocus();
-    transport.setSolo(-1);
-    side.setSoloLane(-1);
+    mix.clear();   // 换文件：静音/独奏从头来
+    mixChanged();
     if (auto* p = props.getUserSettings()) p->setValue("lastDir", f.getParentDirectory().getFullPathName());
     if (onTitleChanged) onTitleChanged(f.getFileName());
     int pending = 0;
@@ -291,6 +317,17 @@ bool MainComponent::keyPressed(const juce::KeyPress& k) {
         || k == juce::KeyPress('y', juce::ModifierKeys::commandModifier, 0)) { showMessage(doc.redo()); return true; }
     if (k == juce::KeyPress('o', juce::ModifierKeys::commandModifier, 0)) { chooseFile(); return true; }
     if (k.getTextCharacter() == 'f' || k.getTextCharacter() == 'F') { canvas.fitAll(); return true; }
+    // M / S：对选中的那条声部（Ctrl+S = 只听这一条）
+    const auto c = juce::CharacterFunctions::toLowerCase(k.getTextCharacter());
+    if ((c == 'm' || c == 's') && canvas.highlightedLane() >= 0) {
+        if (c == 'm') toggleMute(canvas.highlightedLane());
+        else toggleSolo(canvas.highlightedLane(), k.getModifiers().isCommandDown());
+        return true;
+    }
+    if (k == juce::KeyPress('s', juce::ModifierKeys::commandModifier, 0) && canvas.highlightedLane() >= 0) {
+        toggleSolo(canvas.highlightedLane(), true);
+        return true;
+    }
     return false;
 }
 
