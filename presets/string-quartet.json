@@ -1,0 +1,14 @@
+{
+  "format": "midi-reader-preset",
+  "version": 1,
+  "id": "string-quartet",
+  "name": "弦乐四重奏",
+  "description": "小提琴 + 中提琴 + 大提琴，整曲交给 MuScriptor。两把小提琴是同一种乐器，MuScriptor 会扒进同一轨，需要在阅读器里手动拆。",
+  "route": "full",
+  "transcriber": "muscriptor",
+  "slots": [
+    { "lane": "小提琴", "instrument": "violin", "role": "melody", "muscriptor": ["violin"], "match": ["violin"] },
+    { "lane": "中提琴", "instrument": "viola", "role": "harmony", "muscriptor": ["viola"], "match": ["viola"] },
+    { "lane": "大提琴", "instrument": "cello", "role": "bass", "muscriptor": ["cello"], "match": ["cello"] }
+  ]
+}

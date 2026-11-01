@@ -80,6 +80,22 @@ Windows 上把 `.venv/bin/` 换成 `.venv\Scripts\`。
 
 以后改规则时，`pytest` 会把所有样例的变化以 diff 的形式列出来。合体时，C++ 拿同一批样例各跑一次，结果一致才算搬对。
 
+## 音频管线（B 线）
+
+`reader_proto/pipeline/`：音频 → 分离 → 扒谱 → 按编制预设整理成 MIDI + sidecar，以及调 sunoapi.org 做 remix。设计和格式见 [`../docs/audio-pipeline.md`](../docs/audio-pipeline.md)。
+
+模型都通过 [uv](https://docs.astral.sh/uv/) 的 `uvx` 在各自的隔离环境里跑，本目录的 `.venv` 不用装 torch。第一次跑会下载模型环境，比较慢。
+
+```bash
+.venv/bin/python -m reader_proto.pipeline providers                          # 有哪些 provider、缺什么
+```
+
+```bash
+.venv/bin/python -m reader_proto.pipeline transcribe song.wav --preset pop-band
+```
+
+结果在 `song.wav.pipeline/<时间>-…/` 里：`song.mid`（阅读器打开这个）、`song.mid.reader.json`、`run.json`（来源记录），以及每一步的产物。API key 和 HF token 写在 `providers.json` 里，见设计文档第 8 节。
+
 ## 文档
 
 - [`docs/sidecar-format.md`](docs/sidecar-format.md)：sidecar 格式 v1；“原始音符”和 sourceNote 的精确定义；投影算法（C++ 投影层照这个实现）
@@ -96,5 +112,6 @@ Windows 上把 `.venv/bin/` 换成 `.venv\Scripts\`。
 | `reader_proto/analyze.py` | 建初始映射、跑规则（keyswitch ⇄ 八度互相喂），以及用户修正后的重算 |
 | `reader_proto/project.py` | 投影：原 MIDI + sidecar → 逻辑声部 |
 | `reader_proto/export.py` | 写检查用 MIDI（用 symusic） |
+| `reader_proto/pipeline/` | 音频管线：`base.py` 接口，`providers/` 各家模型和服务，`presets.py` 编制预设，`run.py` 配方，`merge.py` 拼分轨 MIDI，`worker.py` stdio 协议 |
 
 为什么读 MIDI 不用 symusic：symusic 载入时按 (轨, 通道, 音色) 重新分组，丢掉了原始轨号和通道号，没法做“按通道拆轨”，sourceNote 也对不上 C++ 那边的 JUCE `MidiFile`。所以读取用了一个两百行的规范解析器，symusic 用来写导出文件，并在测试里交叉校验音符是否一致。
