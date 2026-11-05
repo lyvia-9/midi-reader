@@ -46,6 +46,20 @@ cmake -S . -B build-core -DMIDI_READER_BUILD_APP=OFF
 cmake --build build-core && ./build-core/ParityTests testdata/cases
 ```
 
+### 在 Linux 上交叉编译 Windows 版
+
+GitHub Actions 用不了时的备用路线（需要 `g++-mingw-w64-x86-64-posix`；可以用 Wine 冒烟测试）：
+
+```bash
+cmake -S . -B build-win -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=cmake/mingw-w64.cmake
+```
+
+```bash
+cmake --build build-win && wine build-win/ParityTests.exe testdata/cases
+```
+
+运行库是静态链接的，`build-win/MidiReader_artefacts/Release/MIDI Reader.exe` 单个文件拷走就能用。
+
 ## 改规则的流程
 
 1. 在 `proto/reader_proto/` 里改 Python 版，加或改 `testdata/cases/` 的样例，`cd proto && python -m pytest`
